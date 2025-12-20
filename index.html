@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Browser</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+ <div id="tabs" class="tabs"></div> 
+
+<div class="navbar">
+  <button onclick="createTab('homepage.html')">+</button>
+  <button onclick="back()">⬅</button>
+  <button onclick="forward()">➡</button>
+  <button onclick="reload()">⟳</button>
+
+  <input id="url" placeholder="Search or enter address" />
+  <button onclick="go()">Go</button>
+</div>
+
+ <webview id="webviews"></webview> 
+
+  <webview id="webview" src="homepage.html" ></webview>
+
+
+<script src="renderer.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Browser</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="navbar">
+  <input id="url" placeholder="Enter website URL" />
+  <button onclick="go()">Go</button>
+</div>
+
+<webview id="webview" src="https://google.com"></webview>
+
+<script src="renderer.js"></script>
+</body>
+</html>
