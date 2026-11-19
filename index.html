@@ -1,28 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>My Browser</title>
+  <meta charset="UTF-8">
+  <title>MR.SKY Browser</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
- <div id="tabs" class="tabs"></div> 
+  <!-- Tab Strip -->
+  <div class="tabs-container">
+    <div id="tabs" class="tabs"></div>
+    <button class="new-tab-btn" onclick="createTab()" title="New Tab">+</button>
+  </div>
 
-<div class="navbar">
-  <button onclick="createTab('homepage.html')">+</button>
-  <button onclick="back()">⬅</button>
-  <button onclick="forward()">➡</button>
-  <button onclick="reload()">⟳</button>
+  <!-- Navigation Bar -->
+  <div class="navbar">
+    <button class="nav-btn" onclick="back()" title="Back">⬅</button>
+    <button class="nav-btn" onclick="forward()" title="Forward">➡</button>
+    <button class="nav-btn" id="reload-btn" onclick="reload()" title="Reload">⟳</button>
+    <button class="nav-btn" onclick="home()" title="Home">🏠</button>
 
-  <input id="url" placeholder="Search or enter address" />
-  <button onclick="go()">Go</button>
-</div>
+    <div class="url-bar-container">
+      <input id="url" type="text" placeholder="Search Google or enter address..." spellcheck="false" autocomplete="off" />
+    </div>
 
- <webview id="webviews"></webview> 
+    <button class="go-btn" onclick="go()">Go</button>
+    <button class="nav-btn" onclick="showHistory()" title="Browsing History">🕘</button>
+  </div>
 
-  <webview id="webview" src="homepage.html" ></webview>
+  <!-- Webviews Container -->
+  <div id="webviews"></div>
 
-
-<script src="renderer.js"></script>
-
+  <script src="renderer.js"></script>
 </body>
 </html>

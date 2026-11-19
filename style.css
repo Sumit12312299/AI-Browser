@@ -1,89 +1,200 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
+/* Tabs */
+.tabs-container {
+  display: flex;
+  align-items: center;
+  background-color: #181818;
+  border-bottom: 1px solid #282828;
+  padding: 4px 6px 0 6px;
+  user-select: none;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 4px;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  background-color: #242424;
+  color: #999;
+  padding: 6px 12px;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  max-width: 180px;
+  min-width: 100px;
+  font-size: 13px;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  border-bottom: none;
+}
+
+.tab:hover {
+  background-color: #2d2d2d;
+  color: #ddd;
+}
+
+.tab.active {
+  background-color: #2b2b2b;
+  color: #00ffcc;
+  border-color: #383838;
+  font-weight: 500;
+}
+
+.tab-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 6px;
+}
+
+.tab-close {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 14px;
+  color: #888;
+  cursor: pointer;
+}
+
+.tab-close:hover {
+  background-color: #e81123;
+  color: #fff;
+}
+
+.new-tab-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 20px;
+  line-height: 20px;
+  padding: 4px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-left: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.new-tab-btn:hover {
+  background: #333;
+  color: #00ffcc;
+}
+
+/* Navbar */
 .navbar {
   display: flex;
-  padding: 10px;
-  background-color: #222;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background-color: #202020;
+  border-bottom: 1px solid #2e2e2e;
 }
 
-input {
+.nav-btn {
+  background: #2b2b2b;
+  border: 1px solid #383838;
+  color: #ddd;
+  border-radius: 5px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:hover {
+  background: #383838;
+  color: #00ffcc;
+  border-color: #00ffcc55;
+}
+
+.nav-btn:active {
+  transform: scale(0.96);
+}
+
+.url-bar-container {
   flex: 1;
-  padding: 8px;
 }
 
-button {
-  padding: 8px 14px;
-  margin-left: 5px;
-}
-
-webview {
+#url {
   width: 100%;
-  height: 90vh;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid #383838;
+  background-color: #161616;
+  color: #00ffcc;
+  font-size: 13px;
+  font-family: monospace;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-body.dark {
-  background: #121212;
-  color: white;
-  }
-  
-  
-  body.dark .navbar {
+
+#url:focus {
+  border-color: #00ffcc;
+  box-shadow: 0 0 6px rgba(0, 255, 204, 0.3);
+}
+
+.go-btn {
+  background: #00ffcc;
+  color: #000;
+  border: none;
+  font-weight: bold;
+  padding: 7px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.go-btn:hover {
+  background: #00ccaa;
+}
+
+.go-btn:active {
+  transform: scale(0.96);
+}
+
+/* Webviews */
+#webviews {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
   background: #000;
-  }
-  
-  
-  body.dark input {
-  background: #333;
-  color: white;
-  }
-  .ai-buttons {
-    margin-top: 20px;
-    display: flex;
-    gap: 15px;
-  }
-  
-  .ai-buttons button {
-    padding: 10px 18px;
-    background: transparent;
-    color: #0ff;
-    border: 1px solid #0ff;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.2s;
-  }
-  
-  .ai-buttons button:hover {
-    background: #0ff;
-    color: #000;
-  }
-  #tabs {
-    height: 40px;
-    display: flex;
-    flex-direction: row;      /* ✅ VERY IMPORTANT */
-    align-items: center;
-    background: #f8f7f7;
-    overflow-x: auto;         /* many tabs → horizontal scroll */
-    white-space: nowrap;
-  }
-  #tabs {
-    height: 40px;
-    display: flex;
-    align-items: center;
-    background: white;
-  }
-  
-  .navbar {
-    height: 40px;
-    display: flex;
-    align-items: center;
-    background: #2b2b2b;
-  }
-  
-  #webviews {
-    width:100%;
-    height:90vh;
-    
-  }
-  
+}
+
+#webviews webview {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
