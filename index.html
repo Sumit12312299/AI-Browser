@@ -88,7 +88,10 @@
         <div class="downloads-tray" id="downloads-tray">
           <div class="downloads-tray-header">
             <span class="downloads-tray-title">Downloads</span>
-            <button class="tray-clear-btn" onclick="clearDownloadsHistory()">Clear list</button>
+            <div class="tray-header-actions">
+              <button class="tray-clear-btn" onclick="openDownloadsFolder()" title="Open D:\Downloads">📁 D:\Downloads</button>
+              <button class="tray-clear-btn" onclick="clearDownloadsHistory()">Clear</button>
+            </div>
           </div>
           <div class="downloads-list" id="downloads-list">
             <div class="empty-downloads">No recent downloads</div>

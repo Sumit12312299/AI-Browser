@@ -5,6 +5,20 @@ const fs = require("fs");
 let blockedAdsCount = 0;
 let adBlockerEnabled = true;
 
+// Custom download location: D:\Downloads
+function getDownloadsDirectory() {
+  const customPath = "D:\\Downloads";
+  try {
+    if (!fs.existsSync(customPath)) {
+      fs.mkdirSync(customPath, { recursive: true });
+    }
+    return customPath;
+  } catch (err) {
+    console.warn("Could not create/access D:\\Downloads, falling back to default:", err);
+    return app.getPath("downloads");
+  }
+}
+
 // Valid Chromium Match Patterns for ad and tracker blocking
 const AD_DOMAINS = [
   "*://*.doubleclick.net/*",
@@ -66,9 +80,9 @@ function attachDownloadManager(targetSession) {
   sess.on("will-download", (event, item) => {
     const downloadId = Date.now().toString() + Math.random().toString(36).substr(2, 4);
     const fileName = item.getFilename();
-    const downloadsFolder = app.getPath("downloads");
+    const downloadsFolder = getDownloadsDirectory();
 
-    // Compute unique save path in user's Downloads folder
+    // Compute unique save path in D:\Downloads
     const ext = path.extname(fileName);
     const baseName = path.basename(fileName, ext);
     let targetPath = path.join(downloadsFolder, fileName);
@@ -79,7 +93,7 @@ function attachDownloadManager(targetSession) {
       counter++;
     }
 
-    // Set save path automatically so download never gets stuck or cancelled
+    // Set save path automatically into D:\Downloads
     item.setSavePath(targetPath);
 
     function broadcast(channel, payload) {
@@ -166,9 +180,10 @@ ipcMain.on("toggle-adblocker", (event, enabled) => {
 // IPC handlers for File Operations & Screenshots
 ipcMain.handle("save-screenshot-dialog", async (event, { base64Data, defaultFilename }) => {
   const win = BrowserWindow.getFocusedWindow();
+  const downloadsFolder = getDownloadsDirectory();
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: "Save Webpage Screenshot",
-    defaultPath: defaultFilename || `screenshot-${Date.now()}.png`,
+    defaultPath: path.join(downloadsFolder, defaultFilename || `screenshot-${Date.now()}.png`),
     filters: [{ name: "PNG Images", extensions: ["png"] }]
   });
 
@@ -190,6 +205,11 @@ ipcMain.on("show-item-in-folder", (event, filePath) => {
   if (filePath && fs.existsSync(filePath)) {
     shell.showItemInFolder(filePath);
   }
+});
+
+ipcMain.on("open-downloads-folder", () => {
+  const folder = getDownloadsDirectory();
+  shell.openPath(folder);
 });
 
 app.on("window-all-closed", () => {

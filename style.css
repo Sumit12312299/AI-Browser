@@ -294,6 +294,11 @@ body {
   background: #11141c;
 }
 
+.tray-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .downloads-tray-title {
   font-size: 12px;
   font-weight: 600;

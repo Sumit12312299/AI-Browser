@@ -272,6 +272,10 @@ function clearDownloadsHistory() {
   updateDownloadsUI();
 }
 
+function openDownloadsFolder() {
+  ipcRenderer.send("open-downloads-folder");
+}
+
 // ══════════════════════════════════════════════════════════════════
 // 🍞 TOAST NOTIFICATION SYSTEM
 // ══════════════════════════════════════════════════════════════════
