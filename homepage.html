@@ -29,21 +29,22 @@
     }
 
     /* ══════════════════════════════════════════════════════════════════
-       WALLPAPER SYSTEM (1K, 2K, 4K, 5K ADJUSTABLE WITHOUT CUTTING)
+       WALLPAPER LAYERS (1K, 2K, 4K, 5K ADJUSTABLE WITHOUT CUTTING)
        ══════════════════════════════════════════════════════════════════ */
     /* Ambient blurred backdrop for zero-crop fitting */
     #wallpaper-ambient {
       position: fixed;
-      top: -20px;
-      left: -20px;
-      right: -20px;
-      bottom: -20px;
+      top: -30px;
+      left: -30px;
+      right: -30px;
+      bottom: -30px;
       background-size: cover;
-      background-position: center;
-      filter: blur(28px) brightness(0.65);
+      background-position: center center;
+      filter: blur(32px) brightness(0.6);
       z-index: -3;
       display: none;
-      transform: scale(1.05);
+      transform: scale(1.08);
+      pointer-events: none;
     }
 
     /* Main crisp high-res wallpaper layer */
@@ -57,7 +58,7 @@
       background-position: center center;
       z-index: -2;
       display: none;
-      transition: background-image 0.3s ease;
+      pointer-events: none;
     }
 
     /* Dim overlay so content is always crystal clear */
@@ -67,11 +68,11 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(11, 13, 19, 0.55);
+      background: rgba(11, 13, 19, 0.5);
       z-index: -1;
       display: none;
-      backdrop-filter: blur(0px);
-      transition: background 0.2s ease;
+      pointer-events: none;
+      transition: background 0.15s ease;
     }
 
     /* Default Minimal Dot Grid when no wallpaper */
@@ -104,7 +105,7 @@
       align-items: center;
       gap: 8px;
       padding: 5px 12px;
-      background: rgba(20, 24, 34, 0.65);
+      background: rgba(20, 24, 34, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 6px;
       font-size: 11.5px;
@@ -124,7 +125,7 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
       color: #94a3b8;
-      background: rgba(20, 24, 34, 0.65);
+      background: rgba(20, 24, 34, 0.7);
       padding: 5px 12px;
       border-radius: 6px;
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -149,16 +150,16 @@
       letter-spacing: -0.5px;
       color: #ffffff;
       margin-bottom: 6px;
-      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
     }
 
     .brand-subtitle {
       font-size: 13.5px;
-      color: #94a3b8;
+      color: #cbd5e1;
       letter-spacing: 0.2px;
       margin-bottom: 32px;
       font-weight: 500;
-      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
     }
 
     /* Clean Search Bar */
@@ -171,30 +172,30 @@
     .search-form {
       display: flex;
       align-items: center;
-      background: rgba(20, 24, 35, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(20, 24, 35, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.16);
       border-radius: 10px;
       padding: 5px 6px 5px 16px;
       transition: all 0.15s ease;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(16px);
     }
 
     .search-form:hover {
-      border-color: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.28);
     }
 
     .search-form:focus-within {
       border-color: #3b82f6;
       background: rgba(15, 18, 28, 0.95);
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
     }
 
     .search-icon {
       margin-right: 12px;
       display: flex;
       align-items: center;
-      color: #828ca0;
+      color: #94a3b8;
     }
 
     .search-input {
@@ -232,12 +233,12 @@
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.5px;
-      color: #828ca0;
+      color: #94a3b8;
       margin-bottom: 14px;
       display: flex;
       align-items: center;
       gap: 6px;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
     }
 
     /* AI Cards Grid */
@@ -250,8 +251,8 @@
     }
 
     .ai-card {
-      background: rgba(20, 24, 35, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(20, 24, 35, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 10px;
       padding: 20px 16px;
       display: flex;
@@ -263,10 +264,10 @@
     }
 
     .ai-card:hover {
-      background: rgba(28, 33, 48, 0.85);
+      background: rgba(28, 33, 48, 0.9);
       border-color: rgba(255, 255, 255, 0.25);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
 
     .ai-icon-container {
@@ -276,15 +277,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       margin-bottom: 12px;
-      color: #cbd5e1;
-    }
-
-    .ai-card:hover .ai-icon-container {
-      color: #ffffff;
-      border-color: rgba(255, 255, 255, 0.18);
+      color: #e2e8f0;
     }
 
     .ai-title {
@@ -296,7 +292,7 @@
 
     .ai-desc {
       font-size: 11.5px;
-      color: #94a3b8;
+      color: #cbd5e1;
       text-align: center;
       line-height: 1.35;
     }
@@ -313,26 +309,26 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      background: rgba(20, 24, 35, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(20, 24, 35, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       padding: 7px 14px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 500;
-      color: #cbd5e1;
+      color: #e2e8f0;
       cursor: pointer;
       transition: all 0.15s ease;
       backdrop-filter: blur(12px);
     }
 
     .shortcut-pill:hover {
-      background: rgba(28, 33, 48, 0.9);
-      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(28, 33, 48, 0.95);
+      border-color: rgba(255, 255, 255, 0.25);
       color: #ffffff;
     }
 
     /* ══════════════════════════════════════════════════════════════════
-       WALLPAPER CUSTOMIZER TRIGGER & MODAL
+       WALLPAPER TRIGGER & SETTINGS MODAL
        ══════════════════════════════════════════════════════════════════ */
     .wallpaper-trigger-btn {
       position: fixed;
@@ -341,8 +337,8 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(20, 24, 35, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(20, 24, 35, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: #cbd5e1;
       padding: 7px 14px;
       border-radius: 20px;
@@ -355,19 +351,18 @@
     }
 
     .wallpaper-trigger-btn:hover {
-      background: rgba(28, 33, 48, 0.95);
+      background: #1e2433;
       border-color: #3b82f6;
       color: #ffffff;
     }
 
-    /* Modal Backdrop */
     .wallpaper-modal-backdrop {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.65);
+      background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(8px);
       z-index: 100;
       display: none;
@@ -384,10 +379,10 @@
       width: 100%;
       max-width: 480px;
       background: #141722;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 12px;
       padding: 24px;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
     }
 
     .modal-header {
@@ -430,7 +425,7 @@
     }
 
     .file-dropzone {
-      border: 2px dashed rgba(255, 255, 255, 0.15);
+      border: 2px dashed rgba(255, 255, 255, 0.16);
       border-radius: 8px;
       padding: 24px 16px;
       text-align: center;
@@ -441,7 +436,7 @@
 
     .file-dropzone:hover {
       border-color: #3b82f6;
-      background: rgba(59, 130, 246, 0.05);
+      background: rgba(59, 130, 246, 0.06);
     }
 
     .dropzone-text {
@@ -676,25 +671,25 @@
         <input type="file" id="wallpaperFileInput" accept="image/*" style="display: none;" onchange="handleWallpaperUpload(event)" />
       </div>
 
-      <!-- Fit Adjustment Options (No-Crop vs Cover vs Stretch) -->
+      <!-- Fit Adjustment Options -->
       <div class="form-group">
         <label class="form-label">Screen Adjustment (Aspect Ratio)</label>
         <div class="fit-options">
-          <button class="fit-btn active" id="fit-smart" onclick="setFitMode('smart')" title="Full wallpaper visible with ambient blur background">
-            ✨ Fit (No Crop)
+          <button class="fit-btn active" id="fit-smart" onclick="setFitMode('smart')" title="Full wallpaper visible without cutting anything">
+            Fit (No Crop)
           </button>
           <button class="fit-btn" id="fit-cover" onclick="setFitMode('cover')" title="Fill whole screen">
-            🖼️ Fill (Cover)
+            Fill (Cover)
           </button>
           <button class="fit-btn" id="fit-stretch" onclick="setFitMode('stretch')" title="Stretch to exact window dimensions">
-            ↔️ Stretch
+            Stretch
           </button>
         </div>
       </div>
 
       <!-- Background Dimness Slider -->
       <div class="form-group">
-        <label class="form-label">Overlay Dimness (For text & search bar readability)</label>
+        <label class="form-label">Overlay Dimness (Text & search bar readability)</label>
         <div class="slider-row">
           <input type="range" min="10" max="85" value="50" class="slider-input" id="dimSlider" oninput="updateDimness(this.value)" />
           <span id="dimVal" style="font-size: 12px; color: #94a3b8; font-family: monospace;">50%</span>
@@ -753,81 +748,27 @@
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // INDEXEDDB STORAGE FOR LARGE 1K, 2K, 4K, 5K WALLPAPERS
+    // RELIABLE WALLPAPER STORAGE (DIRECT FILE PATH + DATA URL FALLBACK)
     // ══════════════════════════════════════════════════════════════════
     let currentFitMode = localStorage.getItem('wallpaper_fit') || 'smart';
     let currentDimness = localStorage.getItem('wallpaper_dim') || '50';
 
-    function openDB() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open('MRSKY_WallpaperDB', 1);
-        req.onupgradeneeded = () => {
-          req.result.createObjectStore('wallpapers');
-        };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    }
-
-    async function saveWallpaperBlob(blob) {
-      const db = await openDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('wallpapers', 'readwrite');
-        tx.objectStore('wallpapers').put(blob, 'active_wallpaper');
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-    }
-
-    async function loadWallpaperBlob() {
-      const db = await openDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('wallpapers', 'readonly');
-        const req = tx.objectStore('wallpapers').get('active_wallpaper');
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    }
-
-    async function deleteWallpaperBlob() {
-      const db = await openDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('wallpapers', 'readwrite');
-        tx.objectStore('wallpapers').delete('active_wallpaper');
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-    }
-
-    let activeObjectUrl = null;
-
-    async function applySavedWallpaper() {
-      try {
-        const blob = await loadWallpaperBlob();
-        if (blob) {
-          if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
-          activeObjectUrl = URL.createObjectURL(blob);
-          renderWallpaper(activeObjectUrl);
-        } else {
-          hideWallpaper();
-        }
-      } catch (e) {
-        console.warn('Could not load wallpaper:', e);
+    function renderWallpaper(sourceUrl) {
+      if (!sourceUrl) {
+        hideWallpaper();
+        return;
       }
-    }
 
-    function renderWallpaper(url) {
       const layer = document.getElementById('wallpaper-layer');
       const ambient = document.getElementById('wallpaper-ambient');
       const overlay = document.getElementById('wallpaper-overlay');
 
-      layer.style.backgroundImage = `url("${url}")`;
-      ambient.style.backgroundImage = `url("${url}")`;
+      layer.style.backgroundImage = `url("${sourceUrl}")`;
+      ambient.style.backgroundImage = `url("${sourceUrl}")`;
 
       layer.style.display = 'block';
       overlay.style.display = 'block';
 
-      // Apply fit mode
       applyFitStyling(currentFitMode);
       updateDimness(currentDimness, false);
     }
@@ -841,15 +782,13 @@
       if (activeBtn) activeBtn.classList.add('active');
 
       if (mode === 'smart') {
-        // ✨ NO-CROP SMART FIT: Entire 1K/2K/4K/5K image visible without cutting anything!
+        // ✨ NO-CROP FIT: Complete 1K, 2K, 4K, 5K image shown without cutting any pixel!
         layer.style.backgroundSize = 'contain';
         ambient.style.display = 'block';
       } else if (mode === 'cover') {
-        // Fill entire screen
         layer.style.backgroundSize = 'cover';
         ambient.style.display = 'none';
       } else if (mode === 'stretch') {
-        // 100% width and height
         layer.style.backgroundSize = '100% 100%';
         ambient.style.display = 'none';
       }
@@ -877,23 +816,44 @@
       document.getElementById('wallpaper-overlay').style.display = 'none';
     }
 
-    async function handleWallpaperUpload(event) {
+    function handleWallpaperUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      try {
-        await saveWallpaperBlob(file);
-        await applySavedWallpaper();
-      } catch (err) {
-        alert('Failed to save wallpaper: ' + err.message);
+      // Method 1: Electron File Path (Supports any 1K, 2K, 4K, 5K file of ANY size instantly)
+      if (file.path) {
+        const fileUrl = 'file:///' + file.path.replace(/\\/g, '/');
+        try {
+          localStorage.setItem('wallpaper_url', fileUrl);
+          renderWallpaper(fileUrl);
+          closeWallpaperModal();
+          return;
+        } catch (e) {
+          console.warn('LocalStorage path write failed:', e);
+        }
       }
+
+      // Method 2: Standard FileReader DataURL fallback
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        try {
+          localStorage.setItem('wallpaper_url', dataUrl);
+        } catch (err) {
+          console.warn('Image is very large for localStorage, applying to current session:', err);
+        }
+        renderWallpaper(dataUrl);
+        closeWallpaperModal();
+      };
+      reader.onerror = function() {
+        alert('Could not read the selected image file.');
+      };
+      reader.readAsDataURL(file);
     }
 
-    async function resetWallpaper() {
+    function resetWallpaper() {
       if (confirm('Reset wallpaper to default clean dark theme?')) {
-        await deleteWallpaperBlob();
-        if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
-        activeObjectUrl = null;
+        localStorage.removeItem('wallpaper_url');
         hideWallpaper();
         closeWallpaperModal();
       }
@@ -910,8 +870,13 @@
       document.getElementById('wallpaperModal').classList.remove('open');
     }
 
-    // Load initial wallpaper on startup
-    applySavedWallpaper();
+    // Apply saved wallpaper on initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('wallpaper_url');
+      if (saved) {
+        renderWallpaper(saved);
+      }
+    });
   </script>
 </body>
 </html>

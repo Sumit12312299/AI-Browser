@@ -2,6 +2,9 @@ const { app, BrowserWindow, session, ipcMain, dialog, shell } = require("electro
 const path = require("path");
 const fs = require("fs");
 
+// Allow file:// URLs to load local images from any drive (e.g. D:\, C:\)
+app.commandLine.appendSwitch("allow-file-access-from-files");
+
 let blockedAdsCount = 0;
 let adBlockerEnabled = true;
 
@@ -69,7 +72,6 @@ function setupAdBlocker(targetSession) {
   });
 }
 
-// Attach download listener to a session
 const attachedSessions = new WeakSet();
 
 function attachDownloadManager(targetSession) {
@@ -82,7 +84,6 @@ function attachDownloadManager(targetSession) {
     const fileName = item.getFilename();
     const downloadsFolder = getDownloadsDirectory();
 
-    // Compute unique save path in D:\Downloads
     const ext = path.extname(fileName);
     const baseName = path.basename(fileName, ext);
     let targetPath = path.join(downloadsFolder, fileName);
@@ -93,7 +94,6 @@ function attachDownloadManager(targetSession) {
       counter++;
     }
 
-    // Set save path automatically into D:\Downloads
     item.setSavePath(targetPath);
 
     function broadcast(channel, payload) {
@@ -124,7 +124,7 @@ function attachDownloadManager(targetSession) {
     item.once("done", (e, state) => {
       broadcast("download-done", {
         id: downloadId,
-        state, // 'completed', 'cancelled', 'interrupted'
+        state,
         savePath: targetPath,
         fileName
       });
@@ -164,7 +164,6 @@ app.whenReady().then(() => {
   createWindow();
 });
 
-// Intercept downloads for any webview guest contents created
 app.on("web-contents-created", (event, contents) => {
   if (contents.session) {
     attachDownloadManager(contents.session);
