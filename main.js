@@ -7,6 +7,8 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    show: true,
+    title: "MR.SKY Browser",
     icon: path.join(__dirname, "icon.ico"),
     webPreferences: {
       nodeIntegration: true,
@@ -16,6 +18,11 @@ function createWindow() {
   });
 
   win.loadFile("index.html");
+
+  win.once("ready-to-show", () => {
+    win.show();
+    win.focus();
+  });
 }
 
 app.whenReady().then(createWindow);

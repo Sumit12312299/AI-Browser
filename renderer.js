@@ -28,7 +28,6 @@ function go() {
   if (!url) return;
 
   if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("file://")) {
-    // Check if it looks like a domain name (e.g. example.com or github.com/user)
     if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/.test(url)) {
       url = "https://" + url;
     } else {
@@ -53,7 +52,7 @@ function reload() {
   const wv = getActiveWebview();
   if (!wv) return;
 
-  if (wv.isLoading && wv.isLoading()) {
+  if (typeof wv.isLoading === "function" && wv.isLoading()) {
     wv.stop();
   } else {
     wv.reload();
@@ -101,9 +100,7 @@ function createTab(startURL = getHomepagePath()) {
   // Tab Webview
   const webview = document.createElement("webview");
   webview.id = tabId;
-  webview.style.display = "none";
-  webview.style.width = "100%";
-  webview.style.height = "100%";
+  webview.className = "tab-webview";
 
   const initialUrl = (startURL.startsWith("http://") || startURL.startsWith("https://") || startURL.startsWith("file://"))
     ? startURL
@@ -158,7 +155,7 @@ function createTab(startURL = getHomepagePath()) {
 
 function switchTab(tabId) {
   document.querySelectorAll("#webviews webview").forEach((wv) => {
-    wv.style.display = "none";
+    wv.classList.remove("active-view");
   });
   document.querySelectorAll(".tab").forEach((btn) => {
     btn.classList.remove("active");
@@ -168,7 +165,7 @@ function switchTab(tabId) {
   const activeBtn = document.getElementById("btn-" + tabId);
   if (!activeWebview) return;
 
-  activeWebview.style.display = "block";
+  activeWebview.classList.add("active-view");
   activeTabId = tabId;
   if (activeBtn) activeBtn.classList.add("active");
 
@@ -215,7 +212,6 @@ function saveHistory(url) {
     time: new Date().toLocaleString()
   });
 
-  // Keep latest 200 history items
   if (history.length > 200) {
     history = history.slice(0, 200);
   }
@@ -230,18 +226,15 @@ window.addEventListener("DOMContentLoaded", () => {
   webviewsContainer = document.getElementById("webviews");
   reloadBtn = document.getElementById("reload-btn");
 
-  // Press Enter in URL bar to navigate
   urlInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       go();
     }
   });
 
-  // Select all URL text on focus for easy replacement
   urlInput.addEventListener("focus", () => {
     urlInput.select();
   });
 
-  // Start with default homepage tab
   createTab();
 });
