@@ -1082,10 +1082,8 @@
     }
 
     function openWallpaperModal() {
-      document.getElementById('wallpaperModal').classList.add('open');
-      document.getElementById('dimSlider').value = currentDimness;
-      document.getElementById('dimVal').innerText = `${currentDimness}%`;
-      applyFitStyling(currentFitMode);
+      // Open the native Chrome-style Customize sidebar in the browser!
+      console.log("MRSKY_OPEN_CUSTOMIZE");
     }
 
     function closeWallpaperModal() {

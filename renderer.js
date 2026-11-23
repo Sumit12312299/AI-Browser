@@ -313,31 +313,40 @@ function showToast(message, type = "info", actions = []) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// 🗂️ MULTI-TAB MANAGEMENT
+// 🗂️ MULTI-TAB MANAGEMENT (EDGE-STYLE VERTICAL TABS)
 // ══════════════════════════════════════════════════════════════════
 function createTab(startURL = getHomepagePath()) {
   tabCount++;
   const tabId = "tab-" + tabCount;
 
-  // Tab Header Button
+  // Vertical Tab Row
   const tabBtn = document.createElement("div");
-  tabBtn.className = "tab";
+  tabBtn.className = "vertical-tab";
   tabBtn.id = "btn-" + tabId;
+  tabBtn.title = "New tab";
+  tabBtn.onclick = () => switchTab(tabId);
 
+  // Tab Icon
+  const iconSpan = document.createElement("span");
+  iconSpan.className = "vtab-icon";
+  iconSpan.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
+
+  // Tab Title
   const title = document.createElement("span");
-  title.className = "tab-title";
-  title.innerText = "New Tab";
-  title.onclick = () => switchTab(tabId);
+  title.className = "vtab-title";
+  title.innerText = "New tab";
 
+  // Tab Close
   const closeBtn = document.createElement("span");
-  closeBtn.className = "tab-close";
+  closeBtn.className = "vtab-close";
   closeBtn.innerHTML = "&times;";
-  closeBtn.title = "Close Tab (Ctrl+W)";
+  closeBtn.title = "Close tab (Ctrl+W)";
   closeBtn.onclick = (e) => {
     e.stopPropagation();
     closeTab(tabId);
   };
 
+  tabBtn.appendChild(iconSpan);
   tabBtn.appendChild(title);
   tabBtn.appendChild(closeBtn);
   tabsBar.appendChild(tabBtn);
@@ -359,8 +368,15 @@ function createTab(startURL = getHomepagePath()) {
   // Title update
   webview.addEventListener("page-title-updated", (e) => {
     const pageTitle = e.title || "Untitled";
-    title.innerText = pageTitle.length > 18 ? pageTitle.slice(0, 18) + "..." : pageTitle;
-    title.title = pageTitle;
+    title.innerText = pageTitle;
+    tabBtn.title = pageTitle;
+  });
+
+  // Favicon update
+  webview.addEventListener("page-favicon-updated", (e) => {
+    if (e.favicons && e.favicons.length > 0) {
+      iconSpan.innerHTML = `<img src="${e.favicons[0]}" class="vtab-fav-img" onerror="this.remove()" />`;
+    }
   });
 
   // Navigation sync with URL bar & History
@@ -377,7 +393,7 @@ function createTab(startURL = getHomepagePath()) {
   webview.addEventListener("did-navigate", onNavigate);
   webview.addEventListener("did-navigate-in-page", onNavigate);
 
-  // Sync wallpaper directly from homepage webview to top navbar!
+  // Sync wallpaper directly from homepage webview to top navbar & theme!
   webview.addEventListener("dom-ready", async () => {
     try {
       const url = await webview.executeJavaScript("localStorage.getItem('wallpaper_url')");
@@ -389,6 +405,10 @@ function createTab(startURL = getHomepagePath()) {
   });
 
   webview.addEventListener("console-message", (e) => {
+    if (e.message === "MRSKY_OPEN_CUSTOMIZE") {
+      toggleCustomizeSidebar(true);
+      return;
+    }
     if (e.message && e.message.startsWith("MRSKY_WALLPAPER:")) {
       const val = e.message.slice("MRSKY_WALLPAPER:".length).trim();
       if (val === "CLEAR") {
@@ -429,7 +449,7 @@ function switchTab(tabId) {
   document.querySelectorAll("#webviews webview").forEach((wv) => {
     wv.classList.remove("active-view");
   });
-  document.querySelectorAll(".tab").forEach((btn) => {
+  document.querySelectorAll(".vertical-tab").forEach((btn) => {
     btn.classList.remove("active");
   });
 
@@ -444,7 +464,6 @@ function switchTab(tabId) {
   try {
     const curUrl = (typeof activeWebview.getURL === "function") ? activeWebview.getURL() : activeWebview.src;
     urlInput.value = (curUrl && !curUrl.startsWith("file://")) ? curUrl : "";
-    updateCopilotContext(activeBtn.querySelector(".tab-title")?.innerText || "Page", curUrl);
   } catch {
     urlInput.value = "";
   }
@@ -456,6 +475,13 @@ function switchTab(tabId) {
       reloadBtn.classList.remove("is-loading");
     }
   }
+}
+
+function toggleVerticalTabsCollapse() {
+  const sidebar = document.getElementById("verticalTabsSidebar");
+  if (!sidebar) return;
+  sidebar.classList.toggle("collapsed");
+  localStorage.setItem("vertical_tabs_collapsed", sidebar.classList.contains("collapsed") ? "true" : "false");
 }
 
 function closeTab(tabId) {
@@ -607,6 +633,178 @@ function applyWallpaperTheme(imageUrl) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// 🎨 CHROME-STYLE CUSTOMIZE RIGHT SIDEBAR & THEME ENGINE
+// ══════════════════════════════════════════════════════════════════
+let isCustomizeOpen = false;
+let currentSidebarFit = "smart";
+let currentSidebarDim = 50;
+
+function toggleCustomizeSidebar(forceState) {
+  const sidebar = document.getElementById("customizeSidebar");
+  if (!sidebar) return;
+  isCustomizeOpen = typeof forceState === "boolean" ? forceState : !isCustomizeOpen;
+  if (isCustomizeOpen) {
+    sidebar.classList.add("open");
+  } else {
+    sidebar.classList.remove("open");
+  }
+}
+
+function triggerWallpaperUpload() {
+  document.getElementById("sidebarWallpaperInput")?.click();
+}
+
+function handleSidebarWallpaperFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  let fileUrl = "";
+  if (file.path) {
+    fileUrl = "file:///" + file.path.replace(/\\/g, "/");
+  } else {
+    fileUrl = URL.createObjectURL(file);
+  }
+
+  applyWallpaperTheme(fileUrl);
+  ipcRenderer.invoke("save-wallpaper-config", {
+    url: fileUrl,
+    fit: currentSidebarFit,
+    dim: currentSidebarDim.toString()
+  });
+
+  // Sync to all webviews so homepage updates in real time
+  document.querySelectorAll("#webviews webview").forEach((wv) => {
+    wv.executeJavaScript(`
+      try {
+        localStorage.setItem('wallpaper_url', '${fileUrl}');
+        if (typeof renderWallpaper === 'function') renderWallpaper('${fileUrl}');
+      } catch(e) {}
+    `);
+  });
+
+  showToast("Wallpaper updated successfully", "success");
+}
+
+function setSidebarFitMode(mode) {
+  currentSidebarFit = mode;
+  document.querySelectorAll(".fit-pill").forEach(p => p.classList.remove("active"));
+  document.getElementById("sidebar-fit-" + mode)?.classList.add("active");
+
+  document.querySelectorAll("#webviews webview").forEach((wv) => {
+    wv.executeJavaScript(`
+      try {
+        if (typeof setFitMode === 'function') setFitMode('${mode}');
+      } catch(e) {}
+    `);
+  });
+
+  ipcRenderer.invoke("get-wallpaper-config").then(cfg => {
+    if (cfg && cfg.url) {
+      cfg.fit = mode;
+      ipcRenderer.invoke("save-wallpaper-config", cfg);
+    }
+  });
+}
+
+function handleSidebarDimChange(val) {
+  currentSidebarDim = parseInt(val);
+  const textEl = document.getElementById("sidebarDimText");
+  if (textEl) textEl.innerText = `${val}%`;
+
+  document.querySelectorAll("#webviews webview").forEach((wv) => {
+    wv.executeJavaScript(`
+      try {
+        if (typeof updateDimness === 'function') updateDimness('${val}');
+      } catch(e) {}
+    `);
+  });
+
+  ipcRenderer.invoke("get-wallpaper-config").then(cfg => {
+    if (cfg && cfg.url) {
+      cfg.dim = val.toString();
+      ipcRenderer.invoke("save-wallpaper-config", cfg);
+    }
+  });
+}
+
+// 16 Classic Chrome Two-Tone Color Swatches
+const CHROME_PALETTES = [
+  { name: "Default Blue",   color1: "#2563eb", color2: "#93c5fd" },
+  { name: "Ocean Cyan",     color1: "#0284c7", color2: "#7dd3fc" },
+  { name: "Teal Aqua",      color1: "#0d9488", color2: "#5eead4" },
+  { name: "Emerald Green",  color1: "#059669", color2: "#6ee7b7" },
+  { name: "Forest Green",   color1: "#16a34a", color2: "#86efac" },
+  { name: "Sunny Gold",     color1: "#d97706", color2: "#fde047" },
+  { name: "Amber Bronze",   color1: "#b45309", color2: "#fcd34d" },
+  { name: "Sunset Orange",  color1: "#ea580c", color2: "#fdba74" },
+  { name: "Crimson Red",    color1: "#dc2626", color2: "#fca5a5" },
+  { name: "Rose Pink",      color1: "#db2777", color2: "#f9a8d4" },
+  { name: "Fuchsia",        color1: "#c026d3", color2: "#f0abfc" },
+  { name: "Purple Violet",  color1: "#7c3aed", color2: "#c4b5fd" },
+  { name: "Deep Indigo",    color1: "#4f46e5", color2: "#a5b4fc" },
+  { name: "Midnight",       color1: "#1e293b", color2: "#475569" },
+  { name: "Slate Grey",     color1: "#475569", color2: "#94a3b8" },
+  { name: "Cyberpunk Duo",  color1: "#ec4899", color2: "#8b5cf6" }
+];
+
+function initColorPalettes() {
+  const grid = document.getElementById("colorPaletteGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  const savedColor = localStorage.getItem("theme_custom_accent") || "#2563eb";
+
+  CHROME_PALETTES.forEach((p) => {
+    const circle = document.createElement("div");
+    circle.className = "color-swatch-circle";
+    circle.style.background = `linear-gradient(135deg, ${p.color1} 50%, ${p.color2} 50%)`;
+    circle.title = p.name;
+    if (p.color1.toLowerCase() === savedColor.toLowerCase()) {
+      circle.classList.add("active");
+    }
+
+    circle.onclick = () => {
+      document.querySelectorAll(".color-swatch-circle").forEach(c => c.classList.remove("active"));
+      circle.classList.add("active");
+      applyThemePalette(p.color1);
+    };
+
+    grid.appendChild(circle);
+  });
+}
+
+function applyThemePalette(accentColor) {
+  document.documentElement.style.setProperty("--theme-accent", accentColor);
+  document.documentElement.style.setProperty("--theme-glow", `${accentColor}55`);
+  document.documentElement.style.setProperty("--theme-tint", `${accentColor}28`);
+  localStorage.setItem("theme_custom_accent", accentColor);
+}
+
+function setThemeMode(mode) {
+  document.querySelectorAll(".mode-tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("theme-mode-" + mode)?.classList.add("active");
+  localStorage.setItem("theme_mode_pref", mode);
+}
+
+function resetToDefaultTheme() {
+  if (confirm("Reset theme and wallpaper to default?")) {
+    ipcRenderer.invoke("clear-wallpaper-config");
+    localStorage.removeItem("wallpaper_url");
+    localStorage.removeItem("theme_custom_accent");
+    applyWallpaperTheme(null);
+    document.querySelectorAll("#webviews webview").forEach(wv => {
+      wv.executeJavaScript(`
+        try {
+          if (typeof resetWallpaper === 'function') resetWallpaper();
+        } catch(e) {}
+      `);
+    });
+    toggleCustomizeSidebar(false);
+    showToast("Theme reset to default", "info");
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
 // INITIAL SETUP & GLOBAL SHORTCUTS
 // ══════════════════════════════════════════════════════════════════
 window.addEventListener("DOMContentLoaded", () => {
@@ -614,6 +812,20 @@ window.addEventListener("DOMContentLoaded", () => {
   tabsBar = document.getElementById("tabs");
   webviewsContainer = document.getElementById("webviews");
   reloadBtn = document.getElementById("reload-btn");
+
+  // Restore vertical tabs collapsed state
+  if (localStorage.getItem("vertical_tabs_collapsed") === "true") {
+    document.getElementById("verticalTabsSidebar")?.classList.add("collapsed");
+  }
+
+  // Restore custom accent color if saved
+  const customAccent = localStorage.getItem("theme_custom_accent");
+  if (customAccent) {
+    applyThemePalette(customAccent);
+  }
+
+  // Initialize Chrome color swatches
+  initColorPalettes();
 
   urlInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -651,6 +863,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     if (e.key === "Escape") {
       if (isDownloadsTrayOpen) toggleDownloadsTray();
+      if (isCustomizeOpen) toggleCustomizeSidebar(false);
     }
     if (e.ctrlKey && e.key.toLowerCase() === "t") {
       e.preventDefault();
