@@ -12,9 +12,6 @@ let reloadBtn;
 let isAdBlockerActive = true;
 let totalBlockedAds = 0;
 
-// AI Copilot State
-let isCopilotOpen = false;
-
 // Downloads State
 let downloads = [];
 let isDownloadsTrayOpen = false;
@@ -351,6 +348,7 @@ function createTab(startURL = getHomepagePath()) {
   webview.className = "tab-webview";
   webview.setAttribute("partition", "persist:main"); // ✅ Share persistent session for downloads & cookies
   webview.setAttribute("allowpopups", "true"); // ✅ Allow popup download dialogs
+  webview.setAttribute("nodeintegration", "true");
 
   const initialUrl = (startURL.startsWith("http://") || startURL.startsWith("https://") || startURL.startsWith("file://"))
     ? startURL
@@ -363,10 +361,6 @@ function createTab(startURL = getHomepagePath()) {
     const pageTitle = e.title || "Untitled";
     title.innerText = pageTitle.length > 18 ? pageTitle.slice(0, 18) + "..." : pageTitle;
     title.title = pageTitle;
-
-    if (activeTabId === tabId) {
-      updateCopilotContext(pageTitle, webview.getURL ? webview.getURL() : "");
-    }
   });
 
   // Navigation sync with URL bar & History
@@ -377,12 +371,35 @@ function createTab(startURL = getHomepagePath()) {
       if (!isLocal) {
         saveHistory(e.url);
       }
-      updateCopilotContext(title.innerText, e.url);
     }
   };
 
   webview.addEventListener("did-navigate", onNavigate);
   webview.addEventListener("did-navigate-in-page", onNavigate);
+
+  // Sync wallpaper directly from homepage webview to top navbar!
+  webview.addEventListener("dom-ready", async () => {
+    try {
+      const url = await webview.executeJavaScript("localStorage.getItem('wallpaper_url')");
+      if (url) {
+        applyWallpaperTheme(url);
+        ipcRenderer.invoke("save-wallpaper-config", { url, fit: "smart", dim: "50" });
+      }
+    } catch(e) {}
+  });
+
+  webview.addEventListener("console-message", (e) => {
+    if (e.message && e.message.startsWith("MRSKY_WALLPAPER:")) {
+      const val = e.message.slice("MRSKY_WALLPAPER:".length).trim();
+      if (val === "CLEAR") {
+        applyWallpaperTheme(null);
+        ipcRenderer.invoke("clear-wallpaper-config");
+      } else if (val) {
+        applyWallpaperTheme(val);
+        ipcRenderer.invoke("save-wallpaper-config", { url: val, fit: "smart", dim: "50" });
+      }
+    }
+  });
 
   // Loading animation indicator
   webview.addEventListener("did-start-loading", () => {
@@ -488,258 +505,6 @@ ipcRenderer.on("ad-blocked-update", (event, data) => {
 });
 
 // ══════════════════════════════════════════════════════════════════
-// 🤖 AI COPILOT SIDEBAR
-// ══════════════════════════════════════════════════════════════════
-function toggleCopilot() {
-  isCopilotOpen = !isCopilotOpen;
-  const sidebar = document.getElementById("ai-sidebar");
-  const toggleBtn = document.getElementById("copilot-toggle-btn");
-
-  if (isCopilotOpen) {
-    sidebar.classList.add("open");
-    toggleBtn.classList.add("active");
-    setTimeout(() => document.getElementById("copilot-input")?.focus(), 250);
-  } else {
-    sidebar.classList.remove("open");
-    toggleBtn.classList.remove("active");
-  }
-}
-
-function updateCopilotContext(title, url) {
-  const contextEl = document.getElementById("copilot-context-title");
-  if (!contextEl) return;
-  const displayTitle = (title && title !== "Untitled") ? title : (url ? new URL(url).hostname : "Homepage");
-  contextEl.innerText = displayTitle;
-  contextEl.title = `${displayTitle} (${url})`;
-}
-
-async function extractActivePageContent() {
-  const wv = getActiveWebview();
-  if (!wv) return { title: "", text: "" };
-
-  try {
-    const data = await wv.executeJavaScript(`
-      (() => {
-        const title = document.title || "";
-        const clone = document.body ? document.body.cloneNode(true) : null;
-        if (!clone) return { title, text: "" };
-
-        const removeSelectors = ['script', 'style', 'nav', 'footer', 'noscript', 'svg', 'iframe', '.ad', '[class*="ad-"]'];
-        removeSelectors.forEach(sel => clone.querySelectorAll(sel).forEach(el => el.remove()));
-
-        const text = clone.innerText ? clone.innerText.replace(/\\s+/g, ' ').trim().slice(0, 8000) : "";
-        return { title, text };
-      })()
-    `);
-    return data;
-  } catch (err) {
-    return { title: "", text: "" };
-  }
-}
-
-function appendCopilotMessage(sender, htmlContent) {
-  const container = document.getElementById("copilot-messages");
-  if (!container) return;
-
-  const msgDiv = document.createElement("div");
-  msgDiv.className = `message ${sender}-message`;
-
-  if (sender === "ai") {
-    msgDiv.innerHTML = `
-      <div class="msg-avatar">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-        </svg>
-      </div>
-      <div class="msg-content">${htmlContent}</div>
-    `;
-  } else {
-    msgDiv.innerHTML = `
-      <div class="msg-content">${escapeHTML(htmlContent)}</div>
-    `;
-  }
-
-  container.appendChild(msgDiv);
-  container.scrollTop = container.scrollHeight;
-}
-
-function escapeHTML(str) {
-  return str.replace(/[&<>'"]/g, 
-    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-  );
-}
-
-async function copilotSummarize() {
-  if (!isCopilotOpen) toggleCopilot();
-  appendCopilotMessage("user", "Summarize this page");
-
-  appendCopilotMessage("ai", `<em>Reading page content...</em>`);
-  const { title, text } = await extractActivePageContent();
-
-  const messages = document.querySelectorAll(".copilot-messages .message.ai-message");
-  const lastMsg = messages[messages.length - 1]?.querySelector(".msg-content");
-
-  if (!text || text.length < 50) {
-    if (lastMsg) lastMsg.innerHTML = "This page doesn't have enough readable text to summarize (or it's a local homepage). Open a webpage or article to test!";
-    return;
-  }
-
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-  const cleanSentences = sentences
-    .map(s => s.trim())
-    .filter(s => s.length > 35 && s.length < 220)
-    .slice(0, 5);
-
-  const summaryBullets = cleanSentences.map(s => `<li>${escapeHTML(s)}</li>`).join("");
-
-  if (lastMsg) {
-    lastMsg.innerHTML = `
-      <strong>Summary for "${escapeHTML(title || 'Current Page')}":</strong>
-      <ul>${summaryBullets || '<li>' + escapeHTML(text.slice(0, 250)) + '...</li>'}</ul>
-    `;
-  }
-}
-
-async function copilotKeyTakeaways() {
-  if (!isCopilotOpen) toggleCopilot();
-  appendCopilotMessage("user", "What are the key takeaways?");
-
-  appendCopilotMessage("ai", `<em>Extracting highlights...</em>`);
-  const { title, text } = await extractActivePageContent();
-
-  const messages = document.querySelectorAll(".copilot-messages .message.ai-message");
-  const lastMsg = messages[messages.length - 1]?.querySelector(".msg-content");
-
-  if (!text || text.length < 50) {
-    if (lastMsg) lastMsg.innerHTML = "Cannot extract key takeaways from this view. Open an article or documentation page first!";
-    return;
-  }
-
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-  const takeaways = sentences
-    .map(s => s.trim())
-    .filter(s => s.length > 40 && /(is|are|provides|allows|designed|key|important|feature|help)/i.test(s))
-    .slice(0, 4);
-
-  const bullets = takeaways.length > 0 
-    ? takeaways.map(t => `<li><strong>Highlight:</strong> ${escapeHTML(t)}</li>`).join("")
-    : `<li>${escapeHTML(text.slice(0, 200))}...</li>`;
-
-  if (lastMsg) {
-    lastMsg.innerHTML = `
-      <strong>Key Takeaways:</strong>
-      <ul>${bullets}</ul>
-    `;
-  }
-}
-
-async function copilotExplainSimple() {
-  if (!isCopilotOpen) toggleCopilot();
-  appendCopilotMessage("user", "Explain this in simple words");
-
-  appendCopilotMessage("ai", `<em>Analyzing context...</em>`);
-  const { title, text } = await extractActivePageContent();
-
-  const messages = document.querySelectorAll(".copilot-messages .message.ai-message");
-  const lastMsg = messages[messages.length - 1]?.querySelector(".msg-content");
-
-  if (!text || text.length < 40) {
-    if (lastMsg) lastMsg.innerHTML = "Please open a website or document first so I can explain it!";
-    return;
-  }
-
-  const snippet = text.slice(0, 400);
-
-  if (lastMsg) {
-    lastMsg.innerHTML = `
-      <strong>In Simple Terms:</strong><br>
-      This page discusses <strong>${escapeHTML(title || "this topic")}</strong>.<br><br>
-      Key context:<br>
-      <em>"${escapeHTML(snippet)}..."</em><br><br>
-      Ask any specific question below!
-    `;
-  }
-}
-
-async function handleCopilotSend() {
-  const input = document.getElementById("copilot-input");
-  if (!input) return;
-
-  const query = input.value.trim();
-  if (!query) return;
-
-  input.value = "";
-  appendCopilotMessage("user", query);
-
-  appendCopilotMessage("ai", `<em>Thinking...</em>`);
-  const { title, text } = await extractActivePageContent();
-
-  const messages = document.querySelectorAll(".copilot-messages .message.ai-message");
-  const lastMsg = messages[messages.length - 1]?.querySelector(".msg-content");
-
-  const apiKey = localStorage.getItem("copilot_gemini_key");
-
-  if (apiKey) {
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are MR.SKY Browser Copilot. The user is currently reading the webpage "${title}".\nWebpage text:\n${text.slice(0, 6000)}\n\nUser Question: ${query}\nProvide a direct, helpful, concise answer.`
-            }]
-          }]
-        })
-      });
-      const data = await response.json();
-      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (reply && lastMsg) {
-        lastMsg.innerHTML = reply.replace(/\n/g, '<br>');
-        return;
-      }
-    } catch (e) {
-      console.warn("API call failed, falling back to local reasoning", e);
-    }
-  }
-
-  setTimeout(() => {
-    let answer = "";
-    const lowerQuery = query.toLowerCase();
-
-    if (lowerQuery.includes("who") || lowerQuery.includes("what is") || lowerQuery.includes("meaning")) {
-      const match = text.split('.').find(s => lowerQuery.split(' ').some(w => w.length > 3 && s.toLowerCase().includes(w)));
-      answer = match ? `Based on the page: "${match.trim()}."` : `Based on "${title}", it covers subjects relevant to your query.`;
-    } else if (text.length > 0) {
-      const relevant = text.split('.').filter(s => lowerQuery.split(' ').some(w => w.length > 3 && s.toLowerCase().includes(w))).slice(0, 2);
-      if (relevant.length > 0) {
-        answer = `From the page content:<br><ul>${relevant.map(r => `<li>${escapeHTML(r.trim())}.</li>`).join('')}</ul>`;
-      } else {
-        answer = `I analyzed the page for <em>"${escapeHTML(query)}"</em>. The page primarily focuses on <strong>${escapeHTML(title)}</strong>. Ask to summarize or extract key points!`;
-      }
-    } else {
-      answer = `You are currently on the local start page. Navigate to any website and ask me to analyze it!`;
-    }
-
-    if (lastMsg) lastMsg.innerHTML = answer;
-  }, 350);
-}
-
-function openCopilotSettings() {
-  const currentKey = localStorage.getItem("copilot_gemini_key") || "";
-  const newKey = prompt("Optional: Enter your free Google Gemini API Key for deep cloud reasoning (Leave empty to use built-in local engine):", currentKey);
-  if (newKey !== null) {
-    if (newKey.trim()) {
-      localStorage.setItem("copilot_gemini_key", newKey.trim());
-      alert("✅ Gemini API Key saved! Copilot will now use full cloud LLM intelligence.");
-    } else {
-      localStorage.removeItem("copilot_gemini_key");
-      alert("Switched back to built-in local intelligence engine.");
-    }
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════
 // 🕘 HISTORY
 // ══════════════════════════════════════════════════════════════════
 function saveHistory(url) {
@@ -788,8 +553,9 @@ function applyWallpaperTheme(imageUrl) {
     return;
   }
 
-  // 1. Set ambient blurred background behind the top header
-  ambient.style.backgroundImage = `url("${imageUrl}")`;
+  // 1. Format URL cleanly with forward slashes for CSS compatibility
+  const cleanUrl = imageUrl.replace(/\\/g, "/");
+  ambient.style.backgroundImage = `url("${cleanUrl}")`;
   ambient.style.display = "block";
 
   // 2. Extract top dominant color to sync UI accents (active tab line, focus ring, buttons)
@@ -806,7 +572,6 @@ function applyWallpaperTheme(imageUrl) {
       const data = ctx.getImageData(0, 0, 40, 40).data;
       let r = 0, g = 0, b = 0, count = 0;
       for (let i = 0; i < data.length; i += 4) {
-        // Skip completely black pixels if any
         if (data[i] + data[i+1] + data[i+2] > 20) {
           r += data[i];
           g += data[i+1];
@@ -838,7 +603,7 @@ function applyWallpaperTheme(imageUrl) {
       console.warn("Theme accent extraction failed:", err);
     }
   };
-  img.src = imageUrl;
+  img.src = cleanUrl;
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -858,12 +623,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   urlInput.addEventListener("focus", () => {
     urlInput.select();
-  });
-
-  document.getElementById("copilot-input")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      handleCopilotSend();
-    }
   });
 
   document.addEventListener("click", (e) => {
@@ -890,12 +649,7 @@ window.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       toggleDownloadsTray();
     }
-    if (e.ctrlKey && e.code === "Space") {
-      e.preventDefault();
-      toggleCopilot();
-    }
     if (e.key === "Escape") {
-      if (isCopilotOpen) toggleCopilot();
       if (isDownloadsTrayOpen) toggleDownloadsTray();
     }
     if (e.ctrlKey && e.key.toLowerCase() === "t") {

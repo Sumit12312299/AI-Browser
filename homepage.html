@@ -981,6 +981,7 @@
     function renderWallpaper(sourceUrl) {
       if (!sourceUrl) {
         hideWallpaper();
+        console.log("MRSKY_WALLPAPER:CLEAR");
         return;
       }
 
@@ -996,6 +997,9 @@
 
       applyFitStyling(currentFitMode);
       updateDimness(currentDimness, false);
+
+      // Broadcast to host browser navbar
+      console.log("MRSKY_WALLPAPER:" + sourceUrl);
     }
 
     function applyFitStyling(mode) {
