@@ -766,33 +766,55 @@
     });
 
     // ══════════════════════════════════════════════════════════════════
-    // EDGE / CHROME SHORTCUTS MANAGER
+    // EDGE / CHROME SHORTCUTS MANAGER  (IPC-persisted + localStorage backup)
     // ══════════════════════════════════════════════════════════════════
     const DEFAULT_SHORTCUTS = [
-      { name: "ChatGPT", url: "https://chatgpt.com" },
-      { name: "Gemini", url: "https://gemini.google.com" },
-      { name: "YouTube", url: "https://youtube.com" },
-      { name: "GitHub", url: "https://github.com" },
-      { name: "Fast.com", url: "https://fast.com" },
-      { name: "Reddit", url: "https://reddit.com" },
+      { name: "ChatGPT",   url: "https://chatgpt.com" },
+      { name: "Gemini",    url: "https://gemini.google.com" },
+      { name: "YouTube",   url: "https://youtube.com" },
+      { name: "GitHub",    url: "https://github.com" },
+      { name: "Fast.com",  url: "https://fast.com" },
+      { name: "Reddit",    url: "https://reddit.com" },
       { name: "Wikipedia", url: "https://wikipedia.org" }
     ];
 
-    function getShortcuts() {
-      const stored = localStorage.getItem('mrsky_shortcuts');
-      if (stored) {
+    // In-memory shortcuts list (populated on DOMContentLoaded)
+    let shortcutsList = null;
+
+    async function loadShortcuts() {
+      // 1️⃣ Try IPC (most reliable across restarts)
+      if (ipcRenderer) {
         try {
-          return JSON.parse(stored);
-        } catch (e) {
-          return DEFAULT_SHORTCUTS;
-        }
+          const data = await ipcRenderer.invoke('get-shortcuts');
+          if (Array.isArray(data)) return data;
+        } catch(e) {}
       }
+      // 2️⃣ localStorage backup
+      try {
+        const stored = localStorage.getItem('mrsky_shortcuts');
+        if (stored) return JSON.parse(stored);
+      } catch(e) {}
+      // 3️⃣ Default
       return DEFAULT_SHORTCUTS;
     }
 
-    function saveShortcuts(list) {
-      localStorage.setItem('mrsky_shortcuts', JSON.stringify(list));
+    async function persistShortcuts(list) {
+      shortcutsList = list;
+      // Save via IPC → JSON file
+      if (ipcRenderer) {
+        try { await ipcRenderer.invoke('save-shortcuts', list); } catch(e) {}
+      }
+      // Save to localStorage as backup
+      try { localStorage.setItem('mrsky_shortcuts', JSON.stringify(list)); } catch(e) {}
       renderShortcuts();
+    }
+
+    function getShortcuts() {
+      return shortcutsList || DEFAULT_SHORTCUTS;
+    }
+
+    function saveShortcuts(list) {
+      persistShortcuts(list); // async, fire-and-forget is fine
     }
 
     function renderShortcuts() {
@@ -1068,6 +1090,8 @@
 
     // Startup Initialization
     window.addEventListener('DOMContentLoaded', async () => {
+      // Load shortcuts from IPC/JSON (persists across restarts)
+      shortcutsList = await loadShortcuts();
       renderShortcuts();
 
       // Load wallpaper from persistent JSON config (IPC) or localStorage backup

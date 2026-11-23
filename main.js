@@ -211,6 +211,30 @@ ipcMain.on("open-downloads-folder", () => {
   shell.openPath(folder);
 });
 
+// ── Shortcuts Persistence (JSON file in userData) ─────────────────────────
+const SHORTCUTS_CONFIG_PATH = path.join(app.getPath("userData"), "shortcuts-config.json");
+
+ipcMain.handle("save-shortcuts", (event, shortcuts) => {
+  try {
+    fs.writeFileSync(SHORTCUTS_CONFIG_PATH, JSON.stringify(shortcuts, null, 2), "utf8");
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("get-shortcuts", () => {
+  try {
+    if (fs.existsSync(SHORTCUTS_CONFIG_PATH)) {
+      const data = fs.readFileSync(SHORTCUTS_CONFIG_PATH, "utf8");
+      return JSON.parse(data);
+    }
+    return null;
+  } catch (err) {
+    return null;
+  }
+});
+
 // ── Wallpaper Config Persistence (JSON file in userData) ──────────────────
 const WALLPAPER_CONFIG_PATH = path.join(app.getPath("userData"), "wallpaper-config.json");
 
