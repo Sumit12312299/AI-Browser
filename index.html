@@ -4,27 +4,78 @@
   <meta charset="UTF-8">
   <title>MR.SKY Browser</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <!-- Tab Strip -->
   <div class="tabs-container">
     <div id="tabs" class="tabs"></div>
-    <button class="new-tab-btn" onclick="createTab()" title="New Tab">+</button>
+    <button class="new-tab-btn" onclick="createTab()" title="New Tab (Ctrl+T)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
   </div>
 
   <!-- Navigation Bar -->
   <div class="navbar">
-    <button class="nav-btn" onclick="back()" title="Back">⬅</button>
-    <button class="nav-btn" onclick="forward()" title="Forward">➡</button>
-    <button class="nav-btn" id="reload-btn" onclick="reload()" title="Reload">⟳</button>
-    <button class="nav-btn" onclick="home()" title="Home">🏠</button>
-
-    <div class="url-bar-container">
-      <input id="url" type="text" placeholder="Search Google or enter address..." spellcheck="false" autocomplete="off" />
+    <div class="nav-controls">
+      <button class="nav-btn" onclick="back()" title="Back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <button class="nav-btn" onclick="forward()" title="Forward">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+      <button class="nav-btn" id="reload-btn" onclick="reload()" title="Reload">
+        <svg class="reload-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+      </button>
+      <button class="nav-btn" onclick="home()" title="Home">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </button>
     </div>
 
-    <button class="go-btn" onclick="go()">Go</button>
-    <button class="nav-btn" onclick="showHistory()" title="Browsing History">🕘</button>
+    <!-- Smart Address & Search Capsule -->
+    <div class="url-bar-container">
+      <div class="url-bar-wrapper">
+        <div class="search-icon-wrapper">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00ffcc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <input id="url" type="text" placeholder="Search Google or enter URL..." spellcheck="false" autocomplete="off" />
+        <button class="go-btn" onclick="go()" title="Navigate (Enter)">
+          <span>Go</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="nav-actions">
+      <button class="nav-btn" onclick="showHistory()" title="Browsing History">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- Webviews Container -->

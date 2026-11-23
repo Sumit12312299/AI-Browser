@@ -3,13 +3,15 @@ const path = require("path");
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 800,
+    width: 1280,
+    height: 850,
+    minWidth: 880,
     minHeight: 600,
+    autoHideMenuBar: true, // 🚀 Hides the outdated menu bar for a modern borderless browser look
     show: true,
     title: "MR.SKY Browser",
     icon: path.join(__dirname, "icon.ico"),
+    backgroundColor: "#0d0f17",
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

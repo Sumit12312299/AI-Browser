@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Browsing History</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * {
       box-sizing: border-box;
@@ -10,110 +13,183 @@
       padding: 0;
     }
     body {
-      font-family: monospace;
-      background: radial-gradient(circle, #000, #04091a);
-      color: #00ffcc;
-      padding: 30px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #080a10;
+      color: #e2e8f0;
+      padding: 40px;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .history-container {
+      width: 100%;
+      max-width: 820px;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #1a3344;
-      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 20px;
       margin-bottom: 25px;
     }
     h2 {
       font-size: 26px;
-      letter-spacing: 1px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff 0%, #00ffcc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     .actions {
       display: flex;
       gap: 10px;
     }
-    button {
+    .btn {
       padding: 8px 16px;
-      background: transparent;
-      color: #00ffcc;
-      border: 1px solid #00ffcc;
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       cursor: pointer;
-      font-family: monospace;
-      font-weight: bold;
-      border-radius: 4px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover {
+      background: rgba(0, 255, 204, 0.12);
+      border-color: #00ffcc;
+      color: #00ffcc;
+      transform: translateY(-1px);
+    }
+    .btn-danger:hover {
+      background: rgba(255, 68, 68, 0.15);
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+    .filter-wrapper {
+      margin-bottom: 20px;
+    }
+    .filter-input {
+      width: 100%;
+      padding: 12px 18px;
+      background: rgba(18, 22, 34, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      color: #00ffcc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13.5px;
+      outline: none;
       transition: all 0.2s ease;
     }
-    button:hover {
-      background: #00ffcc;
-      color: #000;
+    .filter-input:focus {
+      border-color: #00ffcc;
+      box-shadow: 0 0 12px rgba(0, 255, 204, 0.2);
     }
     .history-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
-      background: rgba(0, 255, 204, 0.03);
-      border: 1px solid #142834;
-      border-radius: 6px;
+      padding: 14px 18px;
+      background: rgba(18, 22, 34, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
       margin-bottom: 10px;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .history-item:hover {
-      background: rgba(0, 255, 204, 0.08);
-      border-color: #00ffcc55;
+      background: rgba(18, 22, 34, 0.85);
+      border-color: rgba(0, 255, 204, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
     }
-    .history-item a {
+    .history-link {
       color: #00ffcc;
       text-decoration: none;
       word-break: break-all;
       flex: 1;
       margin-right: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
     }
-    .history-item a:hover {
+    .history-link:hover {
       text-decoration: underline;
     }
-    .time {
-      color: #778899;
-      font-size: 13px;
+    .time-badge {
+      color: #64748b;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
       white-space: nowrap;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px 10px;
+      border-radius: 6px;
     }
     .empty-msg {
-      color: #556677;
-      font-size: 16px;
-      margin-top: 40px;
+      color: #64748b;
+      font-size: 15px;
+      margin-top: 50px;
       text-align: center;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h2>🕘 Browsing History</h2>
-    <div class="actions">
-      <button onclick="window.location.href='homepage.html'">🏠 Home</button>
-      <button onclick="clearHistory()">🗑️ Clear History</button>
-    </div>
-  </header>
+  <div class="history-container">
+    <header>
+      <h2>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ffcc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Browsing History
+      </h2>
+      <div class="actions">
+        <button class="btn" onclick="window.location.href='homepage.html'">🏠 Home</button>
+        <button class="btn btn-danger" onclick="clearHistory()">🗑️ Clear All</button>
+      </div>
+    </header>
 
-  <div id="list"></div>
+    <div class="filter-wrapper">
+      <input type="text" id="filterInput" class="filter-input" placeholder="Type to filter history..." />
+    </div>
+
+    <div id="list"></div>
+  </div>
 
   <script>
     const list = document.getElementById('list');
+    const filterInput = document.getElementById('filterInput');
     const history = JSON.parse(localStorage.getItem('history')) || [];
 
-    if (history.length === 0) {
-      list.innerHTML = '<p class="empty-msg">No browsing history yet.</p>';
-    } else {
-      history.forEach(item => {
+    function renderList(items) {
+      list.innerHTML = "";
+      if (items.length === 0) {
+        list.innerHTML = '<p class="empty-msg">No history found.</p>';
+        return;
+      }
+      items.forEach(item => {
         const row = document.createElement('div');
         row.className = 'history-item';
 
         const a = document.createElement('a');
+        a.className = 'history-link';
         a.href = item.url;
         a.textContent = item.url;
 
         const timeSpan = document.createElement('span');
-        timeSpan.className = 'time';
+        timeSpan.className = 'time-badge';
         timeSpan.textContent = item.time;
 
         row.appendChild(a);
@@ -121,6 +197,14 @@
         list.appendChild(row);
       });
     }
+
+    renderList(history);
+
+    filterInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = history.filter(item => item.url.toLowerCase().includes(q));
+      renderList(filtered);
+    });
 
     function clearHistory() {
       if (confirm("Are you sure you want to clear browsing history?")) {

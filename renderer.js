@@ -74,7 +74,7 @@ function createTab(startURL = getHomepagePath()) {
   tabCount++;
   const tabId = "tab-" + tabCount;
 
-  // Tab Button in Tab Strip
+  // Tab Header Button
   const tabBtn = document.createElement("div");
   tabBtn.className = "tab";
   tabBtn.id = "btn-" + tabId;
@@ -87,7 +87,7 @@ function createTab(startURL = getHomepagePath()) {
   const closeBtn = document.createElement("span");
   closeBtn.className = "tab-close";
   closeBtn.innerHTML = "&times;";
-  closeBtn.title = "Close Tab";
+  closeBtn.title = "Close Tab (Ctrl+W)";
   closeBtn.onclick = (e) => {
     e.stopPropagation();
     closeTab(tabId);
@@ -129,17 +129,17 @@ function createTab(startURL = getHomepagePath()) {
   webview.addEventListener("did-navigate", onNavigate);
   webview.addEventListener("did-navigate-in-page", onNavigate);
 
-  // Loading indicator on reload button
+  // Loading animation indicator
   webview.addEventListener("did-start-loading", () => {
     if (activeTabId === tabId && reloadBtn) {
-      reloadBtn.innerText = "✕";
+      reloadBtn.classList.add("is-loading");
       reloadBtn.title = "Stop";
     }
   });
 
   webview.addEventListener("did-stop-loading", () => {
     if (activeTabId === tabId && reloadBtn) {
-      reloadBtn.innerText = "⟳";
+      reloadBtn.classList.remove("is-loading");
       reloadBtn.title = "Reload";
     }
   });
@@ -176,9 +176,12 @@ function switchTab(tabId) {
     urlInput.value = "";
   }
 
-  // Update reload/stop button icon for newly focused tab
   if (reloadBtn && typeof activeWebview.isLoading === "function") {
-    reloadBtn.innerText = activeWebview.isLoading() ? "✕" : "⟳";
+    if (activeWebview.isLoading()) {
+      reloadBtn.classList.add("is-loading");
+    } else {
+      reloadBtn.classList.remove("is-loading");
+    }
   }
 }
 
@@ -219,7 +222,7 @@ function saveHistory(url) {
   localStorage.setItem("history", JSON.stringify(history));
 }
 
-// Initial Setup
+// Initial Setup & Keyboard Shortcuts
 window.addEventListener("DOMContentLoaded", () => {
   urlInput = document.getElementById("url");
   tabsBar = document.getElementById("tabs");
@@ -234,6 +237,45 @@ window.addEventListener("DOMContentLoaded", () => {
 
   urlInput.addEventListener("focus", () => {
     urlInput.select();
+  });
+
+  // Global Keyboard Shortcuts
+  window.addEventListener("keydown", (e) => {
+    // Ctrl + T : New Tab
+    if (e.ctrlKey && e.key.toLowerCase() === "t") {
+      e.preventDefault();
+      createTab();
+    }
+    // Ctrl + W : Close Tab
+    if (e.ctrlKey && e.key.toLowerCase() === "w") {
+      e.preventDefault();
+      if (activeTabId) closeTab(activeTabId);
+    }
+    // Ctrl + R or F5 : Reload
+    if ((e.ctrlKey && e.key.toLowerCase() === "r") || e.key === "F5") {
+      e.preventDefault();
+      reload();
+    }
+    // Ctrl + H : History
+    if (e.ctrlKey && e.key.toLowerCase() === "h") {
+      e.preventDefault();
+      showHistory();
+    }
+    // Ctrl + L : Focus Address Bar
+    if (e.ctrlKey && e.key.toLowerCase() === "l") {
+      e.preventDefault();
+      urlInput.focus();
+    }
+    // Alt + Left : Back
+    if (e.altKey && e.key === "ArrowLeft") {
+      e.preventDefault();
+      back();
+    }
+    // Alt + Right : Forward
+    if (e.altKey && e.key === "ArrowRight") {
+      e.preventDefault();
+      forward();
+    }
   });
 
   createTab();
