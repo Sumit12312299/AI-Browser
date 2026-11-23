@@ -211,6 +211,14 @@ ipcMain.on("open-downloads-folder", () => {
   shell.openPath(folder);
 });
 
+ipcMain.on("open-customize-sidebar", () => {
+  BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send("open-customize-sidebar");
+    }
+  });
+});
+
 // ── Shortcuts Persistence (JSON file in userData) ─────────────────────────
 const SHORTCUTS_CONFIG_PATH = path.join(app.getPath("userData"), "shortcuts-config.json");
 

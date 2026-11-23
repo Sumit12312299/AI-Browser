@@ -224,178 +224,120 @@ body {
   overflow: hidden;
 }
 
-/* Left Vertical Tabs Sidebar (Edge Style) */
+/* Left Vertical Tabs Rail (Minimal Icon Dock) */
 .vertical-tabs-sidebar {
-  width: 210px;
-  min-width: 210px;
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
   height: 100%;
-  background: rgba(13, 16, 24, 0.78);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #0f131a;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
-  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  align-items: center;
+  padding: 10px 0 16px 0;
   z-index: 15;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
   user-select: none;
 }
 
-.vertical-tabs-sidebar.collapsed {
-  width: 52px;
-  min-width: 52px;
-}
-
-.vtabs-top-action {
-  padding: 8px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.new-vtab-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  color: #cbd5e1;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.new-vtab-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-.vertical-tabs-sidebar.collapsed .vtab-btn-text {
+.vertical-tabs-sidebar::-webkit-scrollbar {
   display: none;
 }
 
-.vertical-tabs-sidebar.collapsed .new-vtab-btn {
+.vtabs-chevron-btn {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 8px;
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.vtabs-chevron-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .vertical-tabs-list {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-}
-
-.vertical-tabs-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.vertical-tabs-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 2px 0;
+  flex-shrink: 0;
 }
 
 .vertical-tab {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: 8px;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   background: transparent;
   color: #94a3b8;
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
   border: 1px solid transparent;
-  position: relative;
-  gap: 8px;
-  white-space: nowrap;
 }
 
 .vertical-tab:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transform: scale(1.06);
 }
 
 .vertical-tab.active {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(45, 55, 75, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: #ffffff;
-  font-weight: 600;
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-}
-
-.vertical-tab.active::before {
-  content: "";
-  position: absolute;
-  left: -1px;
-  top: 6px;
-  bottom: 6px;
-  width: 3.5px;
-  border-radius: 4px;
-  background: var(--theme-accent, #3b82f6);
-  box-shadow: 0 0 10px var(--theme-accent, #3b82f6);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 .vtab-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  color: #64748b;
-}
-
-.vertical-tab.active .vtab-icon {
-  color: var(--theme-accent, #3b82f6);
+  width: 20px;
+  height: 20px;
 }
 
 .vtab-fav-img {
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
   object-fit: contain;
 }
 
-.vtab-title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.vertical-tabs-sidebar.collapsed .vtab-title,
-.vertical-tabs-sidebar.collapsed .vtab-close {
-  display: none;
-}
-
-.vertical-tabs-sidebar.collapsed .vertical-tab {
-  justify-content: center;
-  padding: 8px;
-}
-
 .vtab-close {
-  display: inline-flex;
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  font-size: 13px;
-  line-height: 1;
-  color: #64748b;
   opacity: 0;
   transition: all 0.15s ease;
+  z-index: 5;
 }
 
 .vertical-tab:hover .vtab-close {
@@ -403,8 +345,37 @@ body {
 }
 
 .vtab-close:hover {
-  background: rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
+  background: #dc2626;
+  transform: scale(1.15);
+}
+
+.vtabs-divider {
+  width: 28px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 8px 0;
+  flex-shrink: 0;
+}
+
+.vtabs-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.vtabs-add-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transform: scale(1.1);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -413,9 +384,13 @@ body {
 .webviews-container {
   flex: 1;
   position: relative;
-  height: 100%;
+  height: calc(100% - 8px);
+  margin: 4px 6px 4px 2px;
+  border-radius: 12px;
   background: #090a0f;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .webviews-container webview {
@@ -427,6 +402,7 @@ body {
   border: none;
   visibility: hidden;
   z-index: 0;
+  border-radius: 12px;
 }
 
 .webviews-container webview.active-view {

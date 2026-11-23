@@ -1084,6 +1084,12 @@
     function openWallpaperModal() {
       // Open the native Chrome-style Customize sidebar in the browser!
       console.log("MRSKY_OPEN_CUSTOMIZE");
+      try {
+        if (typeof require !== 'undefined') {
+          const { ipcRenderer } = require('electron');
+          ipcRenderer.send('open-customize-sidebar');
+        }
+      } catch(e) {}
     }
 
     function closeWallpaperModal() {

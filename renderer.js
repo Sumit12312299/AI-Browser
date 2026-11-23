@@ -329,14 +329,10 @@ function createTab(startURL = getHomepagePath()) {
   // Tab Icon
   const iconSpan = document.createElement("span");
   iconSpan.className = "vtab-icon";
-  iconSpan.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
+  // Default document icon (matching the image)
+  iconSpan.innerHTML = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="8.5" cy="15" r="0.75" fill="currentColor"></circle><circle cx="12" cy="15" r="0.75" fill="currentColor"></circle><circle cx="15.5" cy="15" r="0.75" fill="currentColor"></circle></svg>`;
 
-  // Tab Title
-  const title = document.createElement("span");
-  title.className = "vtab-title";
-  title.innerText = "New tab";
-
-  // Tab Close
+  // Tab Close (corner hover button)
   const closeBtn = document.createElement("span");
   closeBtn.className = "vtab-close";
   closeBtn.innerHTML = "&times;";
@@ -347,7 +343,6 @@ function createTab(startURL = getHomepagePath()) {
   };
 
   tabBtn.appendChild(iconSpan);
-  tabBtn.appendChild(title);
   tabBtn.appendChild(closeBtn);
   tabsBar.appendChild(tabBtn);
 
@@ -368,7 +363,6 @@ function createTab(startURL = getHomepagePath()) {
   // Title update
   webview.addEventListener("page-title-updated", (e) => {
     const pageTitle = e.title || "Untitled";
-    title.innerText = pageTitle;
     tabBtn.title = pageTitle;
   });
 
@@ -379,10 +373,19 @@ function createTab(startURL = getHomepagePath()) {
     }
   });
 
-  // Navigation sync with URL bar & History
+  // Navigation sync with URL bar, Favicon & History
   const onNavigate = (e) => {
+    const isLocal = e.url.startsWith("file://");
+    if (!isLocal) {
+      try {
+        const domain = new URL(e.url).hostname;
+        iconSpan.innerHTML = `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=64" class="vtab-fav-img" onerror="this.remove()" />`;
+      } catch(err) {}
+    } else {
+      iconSpan.innerHTML = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="8.5" cy="15" r="0.75" fill="currentColor"></circle><circle cx="12" cy="15" r="0.75" fill="currentColor"></circle><circle cx="15.5" cy="15" r="0.75" fill="currentColor"></circle></svg>`;
+    }
+
     if (activeTabId === tabId) {
-      const isLocal = e.url.startsWith("file://");
       urlInput.value = isLocal ? "" : e.url;
       if (!isLocal) {
         saveHistory(e.url);
@@ -556,6 +559,10 @@ function saveHistory(url) {
 function setupWallpaperSync() {
   ipcRenderer.on("wallpaper-updated", (event, config) => {
     applyWallpaperTheme(config ? config.url : null);
+  });
+
+  ipcRenderer.on("open-customize-sidebar", () => {
+    toggleCustomizeSidebar(true);
   });
 
   // Initial load on launch
