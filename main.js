@@ -211,6 +211,43 @@ ipcMain.on("open-downloads-folder", () => {
   shell.openPath(folder);
 });
 
+// ── Wallpaper Config Persistence (JSON file in userData) ──────────────────
+const WALLPAPER_CONFIG_PATH = path.join(app.getPath("userData"), "wallpaper-config.json");
+
+ipcMain.handle("save-wallpaper-config", (event, config) => {
+  try {
+    fs.writeFileSync(WALLPAPER_CONFIG_PATH, JSON.stringify(config, null, 2), "utf8");
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to save wallpaper config:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("get-wallpaper-config", (event) => {
+  try {
+    if (fs.existsSync(WALLPAPER_CONFIG_PATH)) {
+      const data = fs.readFileSync(WALLPAPER_CONFIG_PATH, "utf8");
+      return JSON.parse(data);
+    }
+    return null;
+  } catch (err) {
+    console.error("Failed to read wallpaper config:", err);
+    return null;
+  }
+});
+
+ipcMain.handle("clear-wallpaper-config", (event) => {
+  try {
+    if (fs.existsSync(WALLPAPER_CONFIG_PATH)) {
+      fs.unlinkSync(WALLPAPER_CONFIG_PATH);
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false };
+  }
+});
+
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();

@@ -147,29 +147,33 @@
     .search-form {
       display: flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.22);
       border-radius: 28px;
       padding: 6px 14px 6px 20px;
-      transition: all 0.2s ease;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      transition: all 0.25s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+      backdrop-filter: blur(18px) saturate(1.4);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
     }
 
     .search-form:hover {
-      background: #ffffff;
-      box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+      background: rgba(255, 255, 255, 0.13);
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 10px 36px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255,255,255,0.15);
     }
 
     .search-form:focus-within {
-      background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35), 0 10px 36px rgba(0, 0, 0, 0.5);
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(99, 160, 255, 0.7);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 10px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.12);
     }
 
     .search-icon {
       margin-right: 12px;
       display: flex;
       align-items: center;
-      color: #556070;
+      color: rgba(255, 255, 255, 0.6);
     }
 
     .search-input {
@@ -177,20 +181,21 @@
       background: transparent;
       border: none;
       outline: none;
-      color: #111827;
+      color: #ffffff;
       font-size: 15px;
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-weight: 500;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
     }
 
     .search-input::placeholder {
-      color: #6b7280;
+      color: rgba(255, 255, 255, 0.45);
     }
 
     .search-btn {
       background: transparent;
       border: none;
-      color: #4b5563;
+      color: rgba(255, 255, 255, 0.6);
       padding: 6px;
       display: flex;
       align-items: center;
@@ -201,8 +206,8 @@
     }
 
     .search-btn:hover {
-      background: rgba(0, 0, 0, 0.08);
-      color: #111827;
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
     }
 
     /* ══════════════════════════════════════════════════════════════════
@@ -893,10 +898,63 @@
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // RELIABLE WALLPAPER STORAGE (DIRECT FILE PATH + DATA URL FALLBACK)
+    // RELIABLE WALLPAPER STORAGE — IPC + JSON File (userData folder)
+    // Falls back to localStorage if ipcRenderer not available
     // ══════════════════════════════════════════════════════════════════
-    let currentFitMode = localStorage.getItem('wallpaper_fit') || 'smart';
-    let currentDimness = localStorage.getItem('wallpaper_dim') || '50';
+    let ipcRenderer = null;
+    try {
+      ipcRenderer = require('electron').ipcRenderer;
+    } catch(e) {}
+
+    let currentFitMode = 'smart';
+    let currentDimness = '50';
+
+    async function loadWallpaperConfig() {
+      let config = null;
+      // Try IPC first (most reliable across restarts)
+      if (ipcRenderer) {
+        try {
+          config = await ipcRenderer.invoke('get-wallpaper-config');
+        } catch(e) {}
+      }
+      // Fallback: localStorage
+      if (!config) {
+        const url = localStorage.getItem('wallpaper_url');
+        if (url) {
+          config = {
+            url,
+            fit: localStorage.getItem('wallpaper_fit') || 'smart',
+            dim: localStorage.getItem('wallpaper_dim') || '50'
+          };
+        }
+      }
+      return config;
+    }
+
+    async function saveWallpaperConfig(url, fit, dim) {
+      const config = { url, fit, dim };
+      // Save via IPC to JSON file
+      if (ipcRenderer) {
+        try {
+          await ipcRenderer.invoke('save-wallpaper-config', config);
+        } catch(e) {}
+      }
+      // Also save to localStorage as backup
+      try {
+        localStorage.setItem('wallpaper_url', url);
+        localStorage.setItem('wallpaper_fit', fit);
+        localStorage.setItem('wallpaper_dim', dim);
+      } catch(e) {}
+    }
+
+    async function clearWallpaperConfig() {
+      if (ipcRenderer) {
+        try { await ipcRenderer.invoke('clear-wallpaper-config'); } catch(e) {}
+      }
+      localStorage.removeItem('wallpaper_url');
+      localStorage.removeItem('wallpaper_fit');
+      localStorage.removeItem('wallpaper_dim');
+    }
 
     function renderWallpaper(sourceUrl) {
       if (!sourceUrl) {
@@ -940,8 +998,11 @@
 
     function setFitMode(mode) {
       currentFitMode = mode;
-      localStorage.setItem('wallpaper_fit', mode);
       applyFitStyling(mode);
+      // Save updated config if wallpaper is active
+      const url = document.getElementById('wallpaper-layer').style.backgroundImage
+        .replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+      if (url) saveWallpaperConfig(url, currentFitMode, currentDimness);
     }
 
     function updateDimness(val, save = true) {
@@ -951,7 +1012,6 @@
       overlay.style.background = `rgba(11, 13, 19, ${opacity})`;
       document.getElementById('dimVal').innerText = `${val}%`;
       document.getElementById('dimSlider').value = val;
-      if (save) localStorage.setItem('wallpaper_dim', val);
     }
 
     function hideWallpaper() {
@@ -964,27 +1024,21 @@
       const file = event.target.files[0];
       if (!file) return;
 
+      // Prefer native file path (Electron provides file.path)
       if (file.path) {
         const fileUrl = 'file:///' + file.path.replace(/\\/g, '/');
-        try {
-          localStorage.setItem('wallpaper_url', fileUrl);
-          renderWallpaper(fileUrl);
-          closeWallpaperModal();
-          return;
-        } catch (e) {
-          console.warn('LocalStorage path write failed:', e);
-        }
+        renderWallpaper(fileUrl);
+        saveWallpaperConfig(fileUrl, currentFitMode, currentDimness);
+        closeWallpaperModal();
+        return;
       }
 
+      // Fallback: DataURL for browsers/webviews
       const reader = new FileReader();
       reader.onload = function(e) {
         const dataUrl = e.target.result;
-        try {
-          localStorage.setItem('wallpaper_url', dataUrl);
-        } catch (err) {
-          console.warn('Image is very large for localStorage, applying to current session:', err);
-        }
         renderWallpaper(dataUrl);
+        saveWallpaperConfig(dataUrl, currentFitMode, currentDimness);
         closeWallpaperModal();
       };
       reader.onerror = function() {
@@ -993,9 +1047,9 @@
       reader.readAsDataURL(file);
     }
 
-    function resetWallpaper() {
+    async function resetWallpaper() {
       if (confirm('Reset wallpaper to default clean dark theme?')) {
-        localStorage.removeItem('wallpaper_url');
+        await clearWallpaperConfig();
         hideWallpaper();
         closeWallpaperModal();
       }
@@ -1013,11 +1067,15 @@
     }
 
     // Startup Initialization
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       renderShortcuts();
-      const saved = localStorage.getItem('wallpaper_url');
-      if (saved) {
-        renderWallpaper(saved);
+
+      // Load wallpaper from persistent JSON config (IPC) or localStorage backup
+      const config = await loadWallpaperConfig();
+      if (config && config.url) {
+        currentFitMode = config.fit || 'smart';
+        currentDimness = config.dim || '50';
+        renderWallpaper(config.url);
       }
     });
   </script>
