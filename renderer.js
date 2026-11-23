@@ -97,7 +97,6 @@ async function takePageScreenshot() {
       return;
     }
 
-    // Write image to system clipboard
     clipboard.writeImage(image);
 
     const base64Data = image.toPNG().toString("base64");
@@ -179,7 +178,7 @@ function setupDownloadsListener() {
       updateDownloadsUI();
 
       if (data.state === "completed") {
-        showToast(`✅ Download completed: ${data.fileName}`, "success", [
+        showToast(`✅ Downloaded: ${data.fileName}`, "success", [
           {
             label: "Open File",
             action: () => ipcRenderer.send("open-path", data.savePath)
@@ -346,6 +345,8 @@ function createTab(startURL = getHomepagePath()) {
   const webview = document.createElement("webview");
   webview.id = tabId;
   webview.className = "tab-webview";
+  webview.setAttribute("partition", "persist:main"); // ✅ Share persistent session for downloads & cookies
+  webview.setAttribute("allowpopups", "true"); // ✅ Allow popup download dialogs
 
   const initialUrl = (startURL.startsWith("http://") || startURL.startsWith("https://") || startURL.startsWith("file://"))
     ? startURL
@@ -779,7 +780,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Close downloads tray when clicking outside
   document.addEventListener("click", (e) => {
     const tray = document.getElementById("downloads-tray");
     const btn = document.getElementById("downloads-btn");
@@ -788,67 +788,53 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Setup Download Listeners
   setupDownloadsListener();
 
-  // Global Keyboard Shortcuts
   window.addEventListener("keydown", (e) => {
-    // F12 or Ctrl + Shift + I : DevTools
     if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i")) {
       e.preventDefault();
       toggleDevTools();
     }
-    // Ctrl + Shift + S : Screenshot Tool
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
       e.preventDefault();
       takePageScreenshot();
     }
-    // Ctrl + J : Downloads Tray
     if (e.ctrlKey && e.key.toLowerCase() === "j") {
       e.preventDefault();
       toggleDownloadsTray();
     }
-    // Ctrl + Space : Toggle AI Copilot
     if (e.ctrlKey && e.code === "Space") {
       e.preventDefault();
       toggleCopilot();
     }
-    // Escape : Close Copilot & Downloads Tray if open
     if (e.key === "Escape") {
       if (isCopilotOpen) toggleCopilot();
       if (isDownloadsTrayOpen) toggleDownloadsTray();
     }
-    // Ctrl + T : New Tab
     if (e.ctrlKey && e.key.toLowerCase() === "t") {
       e.preventDefault();
       createTab();
     }
-    // Ctrl + W : Close Tab
     if (e.ctrlKey && e.key.toLowerCase() === "w") {
       e.preventDefault();
       if (activeTabId) closeTab(activeTabId);
     }
-    // Ctrl + R or F5 : Reload
     if ((e.ctrlKey && e.key.toLowerCase() === "r") || e.key === "F5") {
       e.preventDefault();
       reload();
     }
-    // Ctrl + H : History
     if (e.ctrlKey && e.key.toLowerCase() === "h") {
       e.preventDefault();
       showHistory();
     }
-    // Ctrl + L : Focus Address Bar
     if (e.ctrlKey && e.key.toLowerCase() === "l") {
       e.preventDefault();
       urlInput.focus();
     }
-    // Alt + Left : Back
     if (e.altKey && e.key === "ArrowLeft") {
       e.preventDefault();
       back();
     }
-    // Alt + Right : Forward
     if (e.altKey && e.key === "ArrowRight") {
       e.preventDefault();
       forward();

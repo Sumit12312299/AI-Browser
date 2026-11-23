@@ -33,10 +33,11 @@ const AD_DOMAINS = [
   "*://*.advertising.com/*"
 ];
 
-function setupAdBlocker() {
+function setupAdBlocker(targetSession) {
+  const sess = targetSession || session.defaultSession;
   const filter = { urls: AD_DOMAINS };
 
-  session.defaultSession.webRequest.onBeforeRequest(filter, (details, callback) => {
+  sess.webRequest.onBeforeRequest(filter, (details, callback) => {
     if (adBlockerEnabled) {
       blockedAdsCount++;
       BrowserWindow.getAllWindows().forEach((win) => {
@@ -54,11 +55,32 @@ function setupAdBlocker() {
   });
 }
 
-function setupDownloadManager() {
-  session.defaultSession.on("will-download", (event, item) => {
+// Attach download listener to a session
+const attachedSessions = new WeakSet();
+
+function attachDownloadManager(targetSession) {
+  const sess = targetSession || session.defaultSession;
+  if (attachedSessions.has(sess)) return;
+  attachedSessions.add(sess);
+
+  sess.on("will-download", (event, item) => {
     const downloadId = Date.now().toString() + Math.random().toString(36).substr(2, 4);
     const fileName = item.getFilename();
-    const totalBytes = item.getTotalBytes();
+    const downloadsFolder = app.getPath("downloads");
+
+    // Compute unique save path in user's Downloads folder
+    const ext = path.extname(fileName);
+    const baseName = path.basename(fileName, ext);
+    let targetPath = path.join(downloadsFolder, fileName);
+    let counter = 1;
+
+    while (fs.existsSync(targetPath)) {
+      targetPath = path.join(downloadsFolder, `${baseName} (${counter})${ext}`);
+      counter++;
+    }
+
+    // Set save path automatically so download never gets stuck or cancelled
+    item.setSavePath(targetPath);
 
     function broadcast(channel, payload) {
       BrowserWindow.getAllWindows().forEach((win) => {
@@ -71,7 +93,7 @@ function setupDownloadManager() {
     broadcast("download-started", {
       id: downloadId,
       fileName,
-      totalBytes,
+      totalBytes: item.getTotalBytes(),
       startTime: Date.now()
     });
 
@@ -89,7 +111,7 @@ function setupDownloadManager() {
       broadcast("download-done", {
         id: downloadId,
         state, // 'completed', 'cancelled', 'interrupted'
-        savePath: item.getSavePath(),
+        savePath: targetPath,
         fileName
       });
     });
@@ -123,9 +145,17 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  setupAdBlocker();
-  setupDownloadManager();
+  setupAdBlocker(session.defaultSession);
+  attachDownloadManager(session.defaultSession);
   createWindow();
+});
+
+// Intercept downloads for any webview guest contents created
+app.on("web-contents-created", (event, contents) => {
+  if (contents.session) {
+    attachDownloadManager(contents.session);
+    setupAdBlocker(contents.session);
+  }
 });
 
 // IPC handlers for AdBlocker
