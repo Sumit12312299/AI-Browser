@@ -760,6 +760,88 @@ function saveHistory(url) {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// 🎨 DYNAMIC WALLPAPER THEME SYNC
+// ══════════════════════════════════════════════════════════════════
+function setupWallpaperSync() {
+  ipcRenderer.on("wallpaper-updated", (event, config) => {
+    applyWallpaperTheme(config ? config.url : null);
+  });
+
+  // Initial load on launch
+  ipcRenderer.invoke("get-wallpaper-config").then(config => {
+    if (config && config.url) {
+      applyWallpaperTheme(config.url);
+    }
+  }).catch(() => {});
+}
+
+function applyWallpaperTheme(imageUrl) {
+  const ambient = document.getElementById("topWallpaperAmbient");
+  if (!ambient) return;
+
+  if (!imageUrl) {
+    ambient.style.display = "none";
+    ambient.style.backgroundImage = "none";
+    document.documentElement.style.removeProperty("--theme-accent");
+    document.documentElement.style.removeProperty("--theme-glow");
+    document.documentElement.style.removeProperty("--theme-tint");
+    return;
+  }
+
+  // 1. Set ambient blurred background behind the top header
+  ambient.style.backgroundImage = `url("${imageUrl}")`;
+  ambient.style.display = "block";
+
+  // 2. Extract top dominant color to sync UI accents (active tab line, focus ring, buttons)
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => {
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 40;
+      canvas.height = 40;
+      const ctx = canvas.getContext("2d");
+      // Sample the top 20% slice of the image (closest to the navbar)
+      ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight * 0.22, 0, 0, 40, 40);
+      const data = ctx.getImageData(0, 0, 40, 40).data;
+      let r = 0, g = 0, b = 0, count = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        // Skip completely black pixels if any
+        if (data[i] + data[i+1] + data[i+2] > 20) {
+          r += data[i];
+          g += data[i+1];
+          b += data[i+2];
+          count++;
+        }
+      }
+      if (count === 0) count = 1;
+      r = Math.round(r / count);
+      g = Math.round(g / count);
+      b = Math.round(b / count);
+
+      // Boost luminance so accent highlights pop vibrantly
+      const maxVal = Math.max(r, g, b);
+      let accentR = r;
+      let accentG = g;
+      let accentB = b;
+      if (maxVal < 140) {
+        const factor = 175 / (maxVal || 1);
+        accentR = Math.min(255, Math.round(r * factor));
+        accentG = Math.min(255, Math.round(g * factor));
+        accentB = Math.min(255, Math.round(b * factor));
+      }
+
+      document.documentElement.style.setProperty("--theme-accent", `rgb(${accentR}, ${accentG}, ${accentB})`);
+      document.documentElement.style.setProperty("--theme-glow", `rgba(${accentR}, ${accentG}, ${accentB}, 0.35)`);
+      document.documentElement.style.setProperty("--theme-tint", `rgba(${r}, ${g}, ${b}, 0.3)`);
+    } catch (err) {
+      console.warn("Theme accent extraction failed:", err);
+    }
+  };
+  img.src = imageUrl;
+}
+
+// ══════════════════════════════════════════════════════════════════
 // INITIAL SETUP & GLOBAL SHORTCUTS
 // ══════════════════════════════════════════════════════════════════
 window.addEventListener("DOMContentLoaded", () => {
@@ -793,6 +875,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   setupDownloadsListener();
+  setupWallpaperSync();
 
   window.addEventListener("keydown", (e) => {
     if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i")) {

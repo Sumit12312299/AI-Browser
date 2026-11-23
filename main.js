@@ -241,6 +241,11 @@ const WALLPAPER_CONFIG_PATH = path.join(app.getPath("userData"), "wallpaper-conf
 ipcMain.handle("save-wallpaper-config", (event, config) => {
   try {
     fs.writeFileSync(WALLPAPER_CONFIG_PATH, JSON.stringify(config, null, 2), "utf8");
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("wallpaper-updated", config);
+      }
+    });
     return { success: true };
   } catch (err) {
     console.error("Failed to save wallpaper config:", err);
@@ -266,6 +271,11 @@ ipcMain.handle("clear-wallpaper-config", (event) => {
     if (fs.existsSync(WALLPAPER_CONFIG_PATH)) {
       fs.unlinkSync(WALLPAPER_CONFIG_PATH);
     }
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("wallpaper-updated", null);
+      }
+    });
     return { success: true };
   } catch (err) {
     return { success: false };
