@@ -14,132 +14,120 @@
     }
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: #080a10;
+      background: #0b0d13;
       color: #e2e8f0;
       padding: 40px;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      -webkit-font-smoothing: antialiased;
     }
     .history-container {
       width: 100%;
-      max-width: 820px;
+      max-width: 800px;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 20px;
-      margin-bottom: 25px;
+      padding-bottom: 18px;
+      margin-bottom: 22px;
     }
     h2 {
-      font-size: 26px;
+      font-size: 22px;
       font-weight: 700;
-      background: linear-gradient(135deg, #ffffff 0%, #00ffcc 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #ffffff;
       display: flex;
       align-items: center;
       gap: 10px;
     }
     .actions {
       display: flex;
-      gap: 10px;
+      gap: 8px;
     }
     .btn {
-      padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #cbd5e1;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 14px;
+      background: #141722;
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       cursor: pointer;
       font-family: 'Plus Jakarta Sans', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
-      border-radius: 8px;
-      transition: all 0.2s ease;
+      font-weight: 500;
+      font-size: 12.5px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
       display: flex;
       align-items: center;
       gap: 6px;
     }
     .btn:hover {
-      background: rgba(0, 255, 204, 0.12);
-      border-color: #00ffcc;
-      color: #00ffcc;
-      transform: translateY(-1px);
+      background: #191d2b;
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
     }
     .btn-danger:hover {
-      background: rgba(255, 68, 68, 0.15);
-      border-color: #ff4444;
-      color: #ff4444;
+      background: rgba(239, 68, 68, 0.15);
+      border-color: #ef4444;
+      color: #ef4444;
     }
     .filter-wrapper {
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
     .filter-input {
       width: 100%;
-      padding: 12px 18px;
-      background: rgba(18, 22, 34, 0.8);
+      padding: 10px 14px;
+      background: #141722;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      color: #00ffcc;
+      border-radius: 8px;
+      color: #ffffff;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13.5px;
+      font-size: 13px;
       outline: none;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
     }
     .filter-input:focus {
-      border-color: #00ffcc;
-      box-shadow: 0 0 12px rgba(0, 255, 204, 0.2);
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
     }
     .history-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 18px;
-      background: rgba(18, 22, 34, 0.5);
+      padding: 12px 16px;
+      background: #141722;
       border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      margin-bottom: 10px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      animation: fadeIn 0.25s ease-out forwards;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      border-radius: 8px;
+      margin-bottom: 8px;
+      transition: all 0.15s ease;
     }
     .history-item:hover {
-      background: rgba(18, 22, 34, 0.85);
-      border-color: rgba(0, 255, 204, 0.3);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      background: #191d2b;
+      border-color: rgba(255, 255, 255, 0.12);
     }
     .history-link {
-      color: #00ffcc;
+      color: #38bdf8;
       text-decoration: none;
       word-break: break-all;
       flex: 1;
-      margin-right: 20px;
+      margin-right: 18px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
+      font-size: 12.5px;
     }
     .history-link:hover {
       text-decoration: underline;
     }
     .time-badge {
       color: #64748b;
-      font-size: 12px;
+      font-size: 11.5px;
       font-family: 'JetBrains Mono', monospace;
       white-space: nowrap;
-      background: rgba(255, 255, 255, 0.03);
-      padding: 4px 10px;
-      border-radius: 6px;
     }
     .empty-msg {
       color: #64748b;
-      font-size: 15px;
-      margin-top: 50px;
+      font-size: 14px;
+      margin-top: 40px;
       text-align: center;
     }
   </style>
@@ -149,20 +137,20 @@
   <div class="history-container">
     <header>
       <h2>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ffcc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
         Browsing History
       </h2>
       <div class="actions">
-        <button class="btn" onclick="window.location.href='homepage.html'">🏠 Home</button>
-        <button class="btn btn-danger" onclick="clearHistory()">🗑️ Clear All</button>
+        <button class="btn" onclick="window.location.href='homepage.html'">Home</button>
+        <button class="btn btn-danger" onclick="clearHistory()">Clear History</button>
       </div>
     </header>
 
     <div class="filter-wrapper">
-      <input type="text" id="filterInput" class="filter-input" placeholder="Type to filter history..." />
+      <input type="text" id="filterInput" class="filter-input" placeholder="Search history..." />
     </div>
 
     <div id="list"></div>
