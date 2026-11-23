@@ -18,7 +18,7 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   1. MINIMALIST TABS BAR (Linear / Arc style)
+   1. TABS STRIP
    ══════════════════════════════════════════════════════════════════ */
 .tabs-container {
   display: flex;
@@ -119,7 +119,7 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   2. REFINED NAVBAR (Clean, subtle, high contrast)
+   2. NAVBAR & CONTROLS
    ══════════════════════════════════════════════════════════════════ */
 .navbar {
   display: flex;
@@ -129,6 +129,7 @@ body {
   background: #171b26;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   z-index: 10;
+  position: relative;
 }
 
 .nav-controls, .nav-actions {
@@ -149,6 +150,7 @@ body {
   height: 32px;
   cursor: pointer;
   transition: all 0.15s ease;
+  position: relative;
 }
 
 .nav-btn:hover {
@@ -170,7 +172,7 @@ body {
   color: #3b82f6;
 }
 
-/* URL Capsule - Understated & Elegant */
+/* URL Capsule */
 .url-bar-container {
   flex: 1;
 }
@@ -240,7 +242,168 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   3. ACTION BUTTONS (AdBlocker & Copilot)
+   3. DOWNLOADS TRAY POPOVER
+   ══════════════════════════════════════════════════════════════════ */
+.download-btn-wrapper {
+  position: relative;
+}
+
+.download-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #171b26;
+}
+
+.downloads-tray {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  width: 330px;
+  max-height: 400px;
+  background: #141722;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: none;
+  flex-direction: column;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.downloads-tray.open {
+  display: flex;
+}
+
+.downloads-tray-header {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: #11141c;
+}
+
+.downloads-tray-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.tray-clear-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.tray-clear-btn:hover {
+  color: #94a3b8;
+}
+
+.downloads-list {
+  padding: 8px 10px;
+  overflow-y: auto;
+  max-height: 330px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empty-downloads {
+  padding: 24px 0;
+  text-align: center;
+  color: #64748b;
+  font-size: 12.5px;
+}
+
+.download-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.download-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.download-item-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.download-item-status {
+  font-size: 11px;
+  color: #3b82f6;
+  text-transform: capitalize;
+}
+
+.download-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.download-progress-fill {
+  height: 100%;
+  background: #2563eb;
+  transition: width 0.2s ease;
+}
+
+.download-item-meta {
+  font-size: 11px;
+  color: #64748b;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.download-item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.download-action-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.download-action-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   4. ADBLOCKER & COPILOT BUTTONS
    ══════════════════════════════════════════════════════════════════ */
 .adblock-btn {
   display: inline-flex;
@@ -312,7 +475,7 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   4. CONTENT LAYOUT & WEBVIEWS
+   5. CONTENT LAYOUT & WEBVIEWS
    ══════════════════════════════════════════════════════════════════ */
 .main-content-layout {
   flex: 1;
@@ -349,7 +512,7 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   5. AI COPILOT SIDEBAR (Matte Dark, Clean, Linear-like)
+   6. AI COPILOT SIDEBAR
    ══════════════════════════════════════════════════════════════════ */
 .ai-sidebar {
   width: 370px;
@@ -606,5 +769,65 @@ body {
 }
 
 .copilot-send-btn:hover {
+  background: #1d4ed8;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   7. TOAST NOTIFICATIONS
+   ══════════════════════════════════════════════════════════════════ */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  background: #171b26;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #f1f5f9;
+  animation: toastSlideIn 0.2s ease-out;
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast.toast-fade-out {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.25s ease;
+}
+
+.toast-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.toast-btn {
+  background: #2563eb;
+  border: none;
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toast-btn:hover {
   background: #1d4ed8;
 }

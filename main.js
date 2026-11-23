@@ -1,5 +1,6 @@
-const { app, BrowserWindow, session, ipcMain } = require("electron");
+const { app, BrowserWindow, session, ipcMain, dialog, shell } = require("electron");
 const path = require("path");
+const fs = require("fs");
 
 let blockedAdsCount = 0;
 let adBlockerEnabled = true;
@@ -53,6 +54,48 @@ function setupAdBlocker() {
   });
 }
 
+function setupDownloadManager() {
+  session.defaultSession.on("will-download", (event, item) => {
+    const downloadId = Date.now().toString() + Math.random().toString(36).substr(2, 4);
+    const fileName = item.getFilename();
+    const totalBytes = item.getTotalBytes();
+
+    function broadcast(channel, payload) {
+      BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send(channel, payload);
+        }
+      });
+    }
+
+    broadcast("download-started", {
+      id: downloadId,
+      fileName,
+      totalBytes,
+      startTime: Date.now()
+    });
+
+    item.on("updated", (e, state) => {
+      if (state === "progressing") {
+        broadcast("download-progress", {
+          id: downloadId,
+          receivedBytes: item.getReceivedBytes(),
+          totalBytes: item.getTotalBytes()
+        });
+      }
+    });
+
+    item.once("done", (e, state) => {
+      broadcast("download-done", {
+        id: downloadId,
+        state, // 'completed', 'cancelled', 'interrupted'
+        savePath: item.getSavePath(),
+        fileName
+      });
+    });
+  });
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1360,
@@ -63,7 +106,7 @@ function createWindow() {
     show: true,
     title: "MR.SKY Browser",
     icon: path.join(__dirname, "icon.ico"),
-    backgroundColor: "#080a10",
+    backgroundColor: "#0b0d13",
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -81,16 +124,42 @@ function createWindow() {
 
 app.whenReady().then(() => {
   setupAdBlocker();
+  setupDownloadManager();
   createWindow();
 });
 
-// IPC handlers for AdBlocker toggle
+// IPC handlers for AdBlocker
 ipcMain.on("toggle-adblocker", (event, enabled) => {
   adBlockerEnabled = enabled;
 });
 
-ipcMain.on("get-adblock-status", (event) => {
-  event.returnValue = { enabled: adBlockerEnabled, count: blockedAdsCount };
+// IPC handlers for File Operations & Screenshots
+ipcMain.handle("save-screenshot-dialog", async (event, { base64Data, defaultFilename }) => {
+  const win = BrowserWindow.getFocusedWindow();
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
+    title: "Save Webpage Screenshot",
+    defaultPath: defaultFilename || `screenshot-${Date.now()}.png`,
+    filters: [{ name: "PNG Images", extensions: ["png"] }]
+  });
+
+  if (!canceled && filePath) {
+    const buffer = Buffer.from(base64Data, "base64");
+    fs.writeFileSync(filePath, buffer);
+    return { success: true, filePath };
+  }
+  return { success: false };
+});
+
+ipcMain.on("open-path", (event, filePath) => {
+  if (filePath && fs.existsSync(filePath)) {
+    shell.openPath(filePath);
+  }
+});
+
+ipcMain.on("show-item-in-folder", (event, filePath) => {
+  if (filePath && fs.existsSync(filePath)) {
+    shell.showItemInFolder(filePath);
+  }
 });
 
 app.on("window-all-closed", () => {

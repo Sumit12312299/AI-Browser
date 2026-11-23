@@ -1,4 +1,4 @@
-const { ipcRenderer } = require("electron");
+const { ipcRenderer, clipboard } = require("electron");
 const path = require("path");
 
 let tabCount = 0;
@@ -14,6 +14,10 @@ let totalBlockedAds = 0;
 
 // AI Copilot State
 let isCopilotOpen = false;
+
+// Downloads State
+let downloads = [];
+let isDownloadsTrayOpen = false;
 
 function getActiveWebview() {
   return activeTabId ? document.getElementById(activeTabId) : null;
@@ -77,6 +81,235 @@ function home() {
 function showHistory() {
   const wv = getActiveWebview();
   if (wv) wv.loadURL(getHistoryPath());
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 📸 USEFUL TOOL 1: SCREENSHOT TOOL
+// ══════════════════════════════════════════════════════════════════
+async function takePageScreenshot() {
+  const wv = getActiveWebview();
+  if (!wv) return;
+
+  try {
+    const image = await wv.capturePage();
+    if (image.isEmpty()) {
+      showToast("Could not capture screenshot", "error");
+      return;
+    }
+
+    // Write image to system clipboard
+    clipboard.writeImage(image);
+
+    const base64Data = image.toPNG().toString("base64");
+    const activeTitle = (document.getElementById("btn-" + activeTabId)?.querySelector(".tab-title")?.innerText || "page")
+      .toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 20);
+
+    const defaultFilename = `screenshot-${activeTitle}-${Date.now()}.png`;
+
+    showToast("📸 Screenshot copied to clipboard!", "success", [
+      {
+        label: "Save PNG",
+        action: async () => {
+          const res = await ipcRenderer.invoke("save-screenshot-dialog", { base64Data, defaultFilename });
+          if (res.success) {
+            showToast("Saved screenshot successfully!", "success");
+          }
+        }
+      }
+    ]);
+  } catch (err) {
+    console.error("Screenshot capture failed:", err);
+    showToast("Failed to capture screenshot", "error");
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 🛠️ USEFUL TOOL 2: DEVELOPER TOOLS (F12)
+// ══════════════════════════════════════════════════════════════════
+function toggleDevTools() {
+  const wv = getActiveWebview();
+  if (!wv) return;
+
+  if (typeof wv.isDevToolsOpened === "function" && wv.isDevToolsOpened()) {
+    wv.closeDevTools();
+  } else if (typeof wv.openDevTools === "function") {
+    wv.openDevTools();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ⬇️ USEFUL TOOL 3: DOWNLOAD MANAGER TRAY
+// ══════════════════════════════════════════════════════════════════
+function toggleDownloadsTray() {
+  isDownloadsTrayOpen = !isDownloadsTrayOpen;
+  const tray = document.getElementById("downloads-tray");
+  if (tray) {
+    tray.classList.toggle("open", isDownloadsTrayOpen);
+  }
+}
+
+function setupDownloadsListener() {
+  ipcRenderer.on("download-started", (event, item) => {
+    downloads.unshift({
+      id: item.id,
+      fileName: item.fileName,
+      totalBytes: item.totalBytes,
+      receivedBytes: 0,
+      state: "progressing",
+      startTime: item.startTime
+    });
+    updateDownloadsUI();
+    showToast(`⬇ Download started: ${item.fileName}`, "info");
+  });
+
+  ipcRenderer.on("download-progress", (event, data) => {
+    const item = downloads.find(d => d.id === data.id);
+    if (item) {
+      item.receivedBytes = data.receivedBytes;
+      item.totalBytes = data.totalBytes || item.totalBytes;
+      updateDownloadsUI();
+    }
+  });
+
+  ipcRenderer.on("download-done", (event, data) => {
+    const item = downloads.find(d => d.id === data.id);
+    if (item) {
+      item.state = data.state;
+      item.savePath = data.savePath;
+      updateDownloadsUI();
+
+      if (data.state === "completed") {
+        showToast(`✅ Download completed: ${data.fileName}`, "success", [
+          {
+            label: "Open File",
+            action: () => ipcRenderer.send("open-path", data.savePath)
+          },
+          {
+            label: "Folder",
+            action: () => ipcRenderer.send("show-item-in-folder", data.savePath)
+          }
+        ]);
+      } else {
+        showToast(`❌ Download ${data.state}: ${data.fileName}`, "error");
+      }
+    }
+  });
+}
+
+function updateDownloadsUI() {
+  const list = document.getElementById("downloads-list");
+  const badge = document.getElementById("download-badge");
+  if (!list) return;
+
+  const activeCount = downloads.filter(d => d.state === "progressing").length;
+  if (badge) {
+    if (activeCount > 0) {
+      badge.style.display = "inline-flex";
+      badge.innerText = activeCount;
+    } else {
+      badge.style.display = "none";
+    }
+  }
+
+  if (downloads.length === 0) {
+    list.innerHTML = `<div class="empty-downloads">No recent downloads</div>`;
+    return;
+  }
+
+  list.innerHTML = downloads.map(item => {
+    const pct = item.totalBytes > 0 ? Math.round((item.receivedBytes / item.totalBytes) * 100) : 0;
+    const sizeStr = item.totalBytes > 0 
+      ? `${formatBytes(item.receivedBytes)} / ${formatBytes(item.totalBytes)}`
+      : formatBytes(item.receivedBytes);
+
+    let statusText = `${pct}% • ${sizeStr}`;
+    if (item.state === "completed") statusText = `Completed • ${formatBytes(item.receivedBytes || item.totalBytes)}`;
+    if (item.state === "interrupted" || item.state === "cancelled") statusText = `Cancelled`;
+
+    const actionsHtml = item.state === "completed" && item.savePath ? `
+      <div class="download-item-actions">
+        <button class="download-action-btn" onclick="openDownloadedFile('${encodeURIComponent(item.savePath)}')">Open</button>
+        <button class="download-action-btn" onclick="showDownloadedFolder('${encodeURIComponent(item.savePath)}')">Show in Folder</button>
+      </div>
+    ` : "";
+
+    return `
+      <div class="download-item">
+        <div class="download-item-top">
+          <span class="download-item-name" title="${escapeHTML(item.fileName)}">${escapeHTML(item.fileName)}</span>
+          <span class="download-item-status">${item.state}</span>
+        </div>
+        ${item.state === "progressing" ? `
+          <div class="download-progress-bar">
+            <div class="download-progress-fill" style="width: ${pct}%"></div>
+          </div>
+        ` : ""}
+        <div class="download-item-meta">${statusText}</div>
+        ${actionsHtml}
+      </div>
+    `;
+  }).join("");
+}
+
+function formatBytes(bytes, decimals = 1) {
+  if (!bytes || bytes === 0) return "0 B";
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+}
+
+function openDownloadedFile(encodedPath) {
+  ipcRenderer.send("open-path", decodeURIComponent(encodedPath));
+}
+
+function showDownloadedFolder(encodedPath) {
+  ipcRenderer.send("show-item-in-folder", decodeURIComponent(encodedPath));
+}
+
+function clearDownloadsHistory() {
+  downloads = downloads.filter(d => d.state === "progressing");
+  updateDownloadsUI();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 🍞 TOAST NOTIFICATION SYSTEM
+// ══════════════════════════════════════════════════════════════════
+function showToast(message, type = "info", actions = []) {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+
+  const textSpan = document.createElement("span");
+  textSpan.className = "toast-text";
+  textSpan.innerHTML = message;
+  toast.appendChild(textSpan);
+
+  if (actions && actions.length > 0) {
+    const actionWrap = document.createElement("div");
+    actionWrap.className = "toast-actions";
+    actions.forEach(act => {
+      const btn = document.createElement("button");
+      btn.className = "toast-btn";
+      btn.innerText = act.label;
+      btn.onclick = () => {
+        act.action();
+        toast.remove();
+      };
+      actionWrap.appendChild(btn);
+    });
+    toast.appendChild(actionWrap);
+  }
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add("toast-fade-out");
+    setTimeout(() => toast.remove(), 250);
+  }, 4500);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -241,7 +474,6 @@ function toggleAdBlocker() {
   }
 }
 
-// Listen for blocked ads from main process
 ipcRenderer.on("ad-blocked-update", (event, data) => {
   totalBlockedAds = data.count;
   const countBadge = document.getElementById("adblock-count");
@@ -287,7 +519,6 @@ async function extractActivePageContent() {
         const clone = document.body ? document.body.cloneNode(true) : null;
         if (!clone) return { title, text: "" };
 
-        // Strip non-content tags
         const removeSelectors = ['script', 'style', 'nav', 'footer', 'noscript', 'svg', 'iframe', '.ad', '[class*="ad-"]'];
         removeSelectors.forEach(sel => clone.querySelectorAll(sel).forEach(el => el.remove()));
 
@@ -311,7 +542,7 @@ function appendCopilotMessage(sender, htmlContent) {
   if (sender === "ai") {
     msgDiv.innerHTML = `
       <div class="msg-avatar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00ffcc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
       </div>
@@ -333,7 +564,6 @@ function escapeHTML(str) {
   );
 }
 
-// 🪄 Summarize Page Action
 async function copilotSummarize() {
   if (!isCopilotOpen) toggleCopilot();
   appendCopilotMessage("user", "Summarize this page");
@@ -345,11 +575,10 @@ async function copilotSummarize() {
   const lastMsg = messages[messages.length - 1]?.querySelector(".msg-content");
 
   if (!text || text.length < 50) {
-    if (lastMsg) lastMsg.innerHTML = "This page doesn't have enough readable text to summarize (or it's a local homepage). Navigate to an article or website to try!";
+    if (lastMsg) lastMsg.innerHTML = "This page doesn't have enough readable text to summarize (or it's a local homepage). Open a webpage or article to test!";
     return;
   }
 
-  // Extract key sentences
   const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
   const cleanSentences = sentences
     .map(s => s.trim())
@@ -360,18 +589,17 @@ async function copilotSummarize() {
 
   if (lastMsg) {
     lastMsg.innerHTML = `
-      <strong>📄 Summary for "${escapeHTML(title || 'Current Page')}":</strong>
+      <strong>Summary for "${escapeHTML(title || 'Current Page')}":</strong>
       <ul>${summaryBullets || '<li>' + escapeHTML(text.slice(0, 250)) + '...</li>'}</ul>
     `;
   }
 }
 
-// 💡 Key Takeaways Action
 async function copilotKeyTakeaways() {
   if (!isCopilotOpen) toggleCopilot();
   appendCopilotMessage("user", "What are the key takeaways?");
 
-  appendCopilotMessage("ai", `<em>Extracting key highlights...</em>`);
+  appendCopilotMessage("ai", `<em>Extracting highlights...</em>`);
   const { title, text } = await extractActivePageContent();
 
   const messages = document.querySelectorAll(".copilot-messages .message.ai-message");
@@ -394,25 +622,24 @@ async function copilotKeyTakeaways() {
 
   if (lastMsg) {
     lastMsg.innerHTML = `
-      <strong>💡 Key Takeaways:</strong>
+      <strong>Key Takeaways:</strong>
       <ul>${bullets}</ul>
     `;
   }
 }
 
-// 🧠 Explain Simple Action
 async function copilotExplainSimple() {
   if (!isCopilotOpen) toggleCopilot();
   appendCopilotMessage("user", "Explain this in simple words");
 
-  appendCopilotMessage("ai", `<em>Analyzing page context...</em>`);
+  appendCopilotMessage("ai", `<em>Analyzing context...</em>`);
   const { title, text } = await extractActivePageContent();
 
   const messages = document.querySelectorAll(".copilot-messages .message.ai-message");
   const lastMsg = messages[messages.length - 1]?.querySelector(".msg-content");
 
   if (!text || text.length < 40) {
-    if (lastMsg) lastMsg.innerHTML = "Please open a website or document first so I can explain it in simple words!";
+    if (lastMsg) lastMsg.innerHTML = "Please open a website or document first so I can explain it!";
     return;
   }
 
@@ -420,16 +647,15 @@ async function copilotExplainSimple() {
 
   if (lastMsg) {
     lastMsg.innerHTML = `
-      <strong>🧠 In Simple Terms:</strong><br>
-      This page is about <strong>${escapeHTML(title || "this topic")}</strong>.<br><br>
-      In short, it explains:<br>
+      <strong>In Simple Terms:</strong><br>
+      This page discusses <strong>${escapeHTML(title || "this topic")}</strong>.<br><br>
+      Key context:<br>
       <em>"${escapeHTML(snippet)}..."</em><br><br>
-      👉 Feel free to ask me any specific question about any section!
+      Ask any specific question below!
     `;
   }
 }
 
-// Handle Custom User Chat Prompt
 async function handleCopilotSend() {
   const input = document.getElementById("copilot-input");
   if (!input) return;
@@ -446,11 +672,9 @@ async function handleCopilotSend() {
   const messages = document.querySelectorAll(".copilot-messages .message.ai-message");
   const lastMsg = messages[messages.length - 1]?.querySelector(".msg-content");
 
-  // Check if user has configured an API key in localStorage
   const apiKey = localStorage.getItem("copilot_gemini_key");
 
   if (apiKey) {
-    // Optional live cloud LLM call via Gemini API
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
@@ -474,27 +698,26 @@ async function handleCopilotSend() {
     }
   }
 
-  // Smart local contextual answer engine
   setTimeout(() => {
     let answer = "";
     const lowerQuery = query.toLowerCase();
 
     if (lowerQuery.includes("who") || lowerQuery.includes("what is") || lowerQuery.includes("meaning")) {
       const match = text.split('.').find(s => lowerQuery.split(' ').some(w => w.length > 3 && s.toLowerCase().includes(w)));
-      answer = match ? `Based on the page: "${match.trim()}."` : `Based on the current page (${title}), it discusses topics related to your query.`;
+      answer = match ? `Based on the page: "${match.trim()}."` : `Based on "${title}", it covers subjects relevant to your query.`;
     } else if (text.length > 0) {
       const relevant = text.split('.').filter(s => lowerQuery.split(' ').some(w => w.length > 3 && s.toLowerCase().includes(w))).slice(0, 2);
       if (relevant.length > 0) {
-        answer = `Here is what I found on this page:<br><ul>${relevant.map(r => `<li>${escapeHTML(r.trim())}.</li>`).join('')}</ul>`;
+        answer = `From the page content:<br><ul>${relevant.map(r => `<li>${escapeHTML(r.trim())}.</li>`).join('')}</ul>`;
       } else {
-        answer = `I analyzed the page for <em>"${escapeHTML(query)}"</em>. The page primarily focuses on <strong>${escapeHTML(title)}</strong>. Ask me to summarize or explain specific sections!`;
+        answer = `I analyzed the page for <em>"${escapeHTML(query)}"</em>. The page primarily focuses on <strong>${escapeHTML(title)}</strong>. Ask to summarize or extract key points!`;
       }
     } else {
-      answer = `You are currently on the local start page. Open any website and ask me to analyze it!`;
+      answer = `You are currently on the local start page. Navigate to any website and ask me to analyze it!`;
     }
 
     if (lastMsg) lastMsg.innerHTML = answer;
-  }, 400);
+  }, 350);
 }
 
 function openCopilotSettings() {
@@ -550,24 +773,50 @@ window.addEventListener("DOMContentLoaded", () => {
     urlInput.select();
   });
 
-  // Copilot input enter key
   document.getElementById("copilot-input")?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       handleCopilotSend();
     }
   });
 
+  // Close downloads tray when clicking outside
+  document.addEventListener("click", (e) => {
+    const tray = document.getElementById("downloads-tray");
+    const btn = document.getElementById("downloads-btn");
+    if (isDownloadsTrayOpen && tray && !tray.contains(e.target) && !btn.contains(e.target)) {
+      toggleDownloadsTray();
+    }
+  });
+
+  // Setup Download Listeners
+  setupDownloadsListener();
+
   // Global Keyboard Shortcuts
   window.addEventListener("keydown", (e) => {
+    // F12 or Ctrl + Shift + I : DevTools
+    if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i")) {
+      e.preventDefault();
+      toggleDevTools();
+    }
+    // Ctrl + Shift + S : Screenshot Tool
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      takePageScreenshot();
+    }
+    // Ctrl + J : Downloads Tray
+    if (e.ctrlKey && e.key.toLowerCase() === "j") {
+      e.preventDefault();
+      toggleDownloadsTray();
+    }
     // Ctrl + Space : Toggle AI Copilot
     if (e.ctrlKey && e.code === "Space") {
       e.preventDefault();
       toggleCopilot();
     }
-    // Escape : Close Copilot if open
-    if (e.key === "Escape" && isCopilotOpen) {
-      e.preventDefault();
-      toggleCopilot();
+    // Escape : Close Copilot & Downloads Tray if open
+    if (e.key === "Escape") {
+      if (isCopilotOpen) toggleCopilot();
+      if (isDownloadsTrayOpen) toggleDownloadsTray();
     }
     // Ctrl + T : New Tab
     if (e.ctrlKey && e.key.toLowerCase() === "t") {
