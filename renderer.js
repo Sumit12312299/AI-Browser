@@ -330,7 +330,7 @@ function createTab(startURL = getHomepagePath()) {
   const iconSpan = document.createElement("span");
   iconSpan.className = "vtab-icon";
   // Default document icon (matching the image)
-  iconSpan.innerHTML = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="8.5" cy="15" r="0.75" fill="currentColor"></circle><circle cx="12" cy="15" r="0.75" fill="currentColor"></circle><circle cx="15.5" cy="15" r="0.75" fill="currentColor"></circle></svg>`;
+  iconSpan.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="8.5" cy="15" r="0.75" fill="currentColor"></circle><circle cx="12" cy="15" r="0.75" fill="currentColor"></circle><circle cx="15.5" cy="15" r="0.75" fill="currentColor"></circle></svg>`;
 
   // Tab Close (corner hover button)
   const closeBtn = document.createElement("span");
@@ -382,7 +382,7 @@ function createTab(startURL = getHomepagePath()) {
         iconSpan.innerHTML = `<img src="https://www.google.com/s2/favicons?domain=${domain}&sz=64" class="vtab-fav-img" onerror="this.remove()" />`;
       } catch(err) {}
     } else {
-      iconSpan.innerHTML = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="8.5" cy="15" r="0.75" fill="currentColor"></circle><circle cx="12" cy="15" r="0.75" fill="currentColor"></circle><circle cx="15.5" cy="15" r="0.75" fill="currentColor"></circle></svg>`;
+      iconSpan.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="8.5" cy="15" r="0.75" fill="currentColor"></circle><circle cx="12" cy="15" r="0.75" fill="currentColor"></circle><circle cx="15.5" cy="15" r="0.75" fill="currentColor"></circle></svg>`;
     }
 
     if (activeTabId === tabId) {
